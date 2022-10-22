@@ -1,0 +1,75 @@
+{
+  "name": "@cardinal/payment-manager",
+  "version": "1.7.5",
+  "description": "Cardinal payment manager SDK",
+  "keywords": [
+    "solana",
+    "anchor",
+    "cardinal",
+    "payment manager"
+  ],
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "repository": "git@github.com:cardinal-labs/cardinal-payemnt-manager.git",
+  "author": "The Cardinal Team <team@cardinal.so>",
+  "bugs": {
+    "url": "https://github.com/cardinal-labs/cardinal-payment-manager/issues",
+    "email": "info@cardinal.so"
+  },
+  "homepage": "https://cardinal.so",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "build": "rm -fr dist/ && tsc -P tsconfig.cjs.json && tsc -P tsconfig.esm.json",
+    "clean": "rm -fr dist/",
+    "idl:generate": "./scripts/generate-idls-types.sh",
+    "typecheck": "tsc",
+    "lint": "eslint . --cache",
+    "lint:ci": "eslint . --max-warnings=0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.1",
+    "@types/chai": "^4.3.3",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.11.3",
+    "bn.js": "^5.2.0",
+    "jsbi": "^4.3.0",
+    "mocha": "^10.1.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^4.8.4"
+  },
+  "peerDependencies": {
+    "@project-serum/anchor": ">=0.19",
+    "@saberhq/anchor-contrib": "^1.11",
+    "@saberhq/solana-contrib": "^1.11",
+    "@saberhq/token-utils": "^1.11",
+    "@solana/web3.js": "^1",
+    "bn.js": "^5.2.0",
+    "jsbi": "^3 || ^4"
+  },
+  "resolutions": {
+    "bn.js": "^5.2.0",
+    "@types/bn.js": "^5.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/",
+    "src/"
+  ],
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --cache --fix",
+    "*.{js,json,jsx,html,css,md}": "prettier --write"
+  },
+  "dependencies": {
+    "@cardinal/common": "^3.0.1",
+    "@metaplex-foundation/mpl-token-metadata": "^1.2.5",
+    "@project-serum/anchor": "^0.25.0",
+    "@saberhq/anchor-contrib": "^1.14.9",
+    "@saberhq/chai-solana": "^1.14.9",
+    "@saberhq/solana-contrib": "^1.14.9",
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.66.2"
+  },
+  "packageManager": "yarn@3.1.1"
+}
