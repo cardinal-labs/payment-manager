@@ -19,16 +19,11 @@ import {
 } from "@saberhq/solana-contrib";
 import type { Token } from "@solana/spl-token";
 import * as splToken from "@solana/spl-token";
-import {
-  AccountMeta,
-  Keypair,
-  LAMPORTS_PER_SOL,
-  Transaction,
-} from "@solana/web3.js";
+import { AccountMeta, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { expect } from "chai";
 import { getPaymentManager } from "../sdk/accounts";
-import { handlePaymentWithRoyalties, init } from "../sdk/instruction";
 import { findPaymentManagerAddress } from "../sdk/pda";
+import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
 import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
 
 import { getProvider } from "./workspace";
@@ -36,9 +31,9 @@ import { getProvider } from "./workspace";
 describe("Handle payment with royalties with seller fee", () => {
   const MAKER_FEE = new BN(500);
   const TAKER_FEE = new BN(300);
+  const ROYALTEE_FEE_SHARE = new BN(4500);
   const BASIS_POINTS_DIVISOR = new BN(10000);
   const paymentAmount = new BN(1000);
-  const royaltyFeeShare = new BN(4500);
   const sellerFeeBasisPoints = 100;
   const RECIPIENT_START_PAYMENT_AMOUNT = new BN(10000000000);
   const paymentManagerName = Math.random().toString(36).slice(2, 7);
@@ -154,20 +149,18 @@ describe("Handle payment with royalties with seller fee", () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    const [ix] = await init(
+    await withInit(
+      transaction,
       provider.connection,
       provider.wallet,
       paymentManagerName,
-      {
-        feeCollector: feeCollector.publicKey,
-        makerFeeBasisPoints: MAKER_FEE.toNumber(),
-        takerFeeBasisPoints: TAKER_FEE.toNumber(),
-        includeSellerFeeBasisPoints: true,
-        royaltyFeeShare: royaltyFeeShare,
-      }
+      feeCollector.publicKey,
+      MAKER_FEE.toNumber(),
+      TAKER_FEE.toNumber(),
+      true,
+      ROYALTEE_FEE_SHARE
     );
 
-    transaction.add(ix);
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
         connection: provider.connection,
@@ -197,7 +190,7 @@ describe("Handle payment with royalties with seller fee", () => {
     );
     expect(paymentManagerData.parsed.includeSellerFeeBasisPoints).to.be.true;
     expect(paymentManagerData.parsed.royaltyFeeShare?.toNumber()).to.eq(
-      royaltyFeeShare.toNumber()
+      ROYALTEE_FEE_SHARE.toNumber()
     );
   });
 
@@ -223,12 +216,9 @@ describe("Handle payment with royalties with seller fee", () => {
     const royaltiesRemainingAccounts: AccountMeta[] = [];
 
     ///
-    const creator1MintTokenAccount = await withFindOrInitAssociatedTokenAccount(
-      new Transaction(),
-      provider.connection,
+    const creator1MintTokenAccount = await findAta(
       paymentMint.publicKey,
       creator1.publicKey,
-      provider.wallet.publicKey,
       true
     );
     royaltiesRemainingAccounts.push({
@@ -237,12 +227,9 @@ describe("Handle payment with royalties with seller fee", () => {
       isWritable: true,
     });
 
-    const creator2MintTokenAccount = await withFindOrInitAssociatedTokenAccount(
-      new Transaction(),
-      provider.connection,
+    const creator2MintTokenAccount = await findAta(
       paymentMint.publicKey,
       creator2.publicKey,
-      provider.wallet.publicKey,
       true
     );
     royaltiesRemainingAccounts.push({
@@ -251,12 +238,9 @@ describe("Handle payment with royalties with seller fee", () => {
       isWritable: true,
     });
 
-    const creator3MintTokenAccount = await withFindOrInitAssociatedTokenAccount(
-      new Transaction(),
-      provider.connection,
+    const creator3MintTokenAccount = await findAta(
       paymentMint.publicKey,
       creator3.publicKey,
-      provider.wallet.publicKey,
       true
     );
     royaltiesRemainingAccounts.push({
@@ -332,22 +316,18 @@ describe("Handle payment with royalties with seller fee", () => {
       // pass
     }
 
-    transaction.add(
-      await handlePaymentWithRoyalties(
-        provider.connection,
-        provider.wallet,
-        paymentManagerName,
-        {
-          paymentAmount: new BN(paymentAmount),
-          payerTokenAccount: payerTokenAccountId,
-          feeCollectorTokenAccount: feeCollectorTokenAccount,
-          paymentTokenAccount: paymentTokenAccountId,
-          paymentMint: paymentMint.publicKey,
-          mint: rentalMint.publicKey,
-          mintMetadata: metadataId,
-          royaltiesRemainingAccounts: royaltiesRemainingAccounts,
-        }
-      )
+    await withHandlePaymentWithRoyalties(
+      transaction,
+      provider.connection,
+      provider.wallet,
+      paymentManagerName,
+      new BN(paymentAmount),
+      rentalMint.publicKey,
+      metadataId,
+      paymentMint.publicKey,
+      payerTokenAccountId,
+      feeCollectorTokenAccount,
+      paymentTokenAccountId
     );
 
     const txEnvelope = new TransactionEnvelope(
@@ -374,7 +354,7 @@ describe("Handle payment with royalties with seller fee", () => {
       .mul(new BN(sellerFeeBasisPoints))
       .div(BASIS_POINTS_DIVISOR);
     const totalCreatorsFee = totalFees
-      .mul(royaltyFeeShare)
+      .mul(ROYALTEE_FEE_SHARE)
       .div(BASIS_POINTS_DIVISOR)
       .add(sellerFee);
     totalFees = totalFees.add(sellerFee);

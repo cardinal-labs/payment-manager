@@ -2,11 +2,12 @@ import { tryGetAccount } from "@cardinal/common";
 import { web3 } from "@project-serum/anchor";
 import { expectTXTable } from "@saberhq/chai-solana";
 import { SolanaProvider, TransactionEnvelope } from "@saberhq/solana-contrib";
-import { Keypair } from "@solana/web3.js";
+import { Keypair, Transaction } from "@solana/web3.js";
+import { BN } from "bn.js";
 import { expect } from "chai";
 import { getPaymentManager } from "../sdk/accounts";
-import { close, init } from "../sdk/instruction";
 import { findPaymentManagerAddress } from "../sdk/pda";
+import { withClose, withInit } from "../sdk/transaction";
 
 import { getProvider } from "./workspace";
 
@@ -20,19 +21,18 @@ describe("Init again and close payment manager", () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    const [ix] = await init(
+    await withInit(
+      transaction,
       provider.connection,
       provider.wallet,
       paymentManagerName,
-      {
-        feeCollector: feeCollector.publicKey,
-        makerFeeBasisPoints: MAKER_FEE,
-        takerFeeBasisPoints: TAKER_FEE,
-        includeSellerFeeBasisPoints: false,
-      }
+      feeCollector.publicKey,
+      MAKER_FEE,
+      TAKER_FEE,
+      false,
+      new BN(0)
     );
 
-    transaction.add(ix);
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
         connection: provider.connection,
@@ -58,25 +58,27 @@ describe("Init again and close payment manager", () => {
     expect(paymentManagerData.parsed.takerFeeBasisPoints).to.eq(TAKER_FEE);
   });
 
-  it("Init again fails", () => {
+  it("Init again fails", async () => {
     const provider = getProvider();
+
+    const transaction = new Transaction();
+    await withInit(
+      transaction,
+      provider.connection,
+      provider.wallet,
+      paymentManagerName,
+      feeCollector.publicKey,
+      MAKER_FEE,
+      TAKER_FEE,
+      false,
+      new BN(0)
+    );
     expect(async () => {
       await expectTXTable(
-        new TransactionEnvelope(SolanaProvider.init(provider), [
-          (
-            await init(
-              provider.connection,
-              provider.wallet,
-              paymentManagerName,
-              {
-                feeCollector: feeCollector.publicKey,
-                makerFeeBasisPoints: MAKER_FEE,
-                takerFeeBasisPoints: TAKER_FEE,
-                includeSellerFeeBasisPoints: false,
-              }
-            )
-          )[0],
-        ]),
+        new TransactionEnvelope(
+          SolanaProvider.init(provider),
+          transaction.instructions
+        ),
         "Fail to init again",
         { verbosity: "error" }
       ).to.be.rejectedWith(Error);
@@ -88,15 +90,20 @@ describe("Init again and close payment manager", () => {
     const balanceBefore = await provider.connection.getBalance(
       provider.wallet.publicKey
     );
+    const transaction = new Transaction();
+    await withClose(
+      transaction,
+      provider.connection,
+      provider.wallet,
+      paymentManagerName,
+      provider.wallet.publicKey
+    );
+
     await expectTXTable(
-      new TransactionEnvelope(SolanaProvider.init(provider), [
-        await close(
-          provider.connection,
-          provider.wallet,
-          paymentManagerName,
-          provider.wallet.publicKey
-        ),
-      ]),
+      new TransactionEnvelope(
+        SolanaProvider.init(provider),
+        transaction.instructions
+      ),
       "Close payment manager",
       {
         verbosity: "error",

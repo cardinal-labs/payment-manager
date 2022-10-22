@@ -52,7 +52,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all --manifest-path ./program/Cargo.toml -- --check
+          args: --all --manifest-path ./Cargo.toml -- --check
 
   soteria-scan:
     runs-on: ubuntu-latest
@@ -116,8 +116,8 @@ jobs:
       - name: Setup
         run: mkdir -p target/deploy
       - run: cp -r tests/test-keypairs/* target/deploy
-      - run: find . -type f -name "*" -exec sed -i'' -e "s/pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn/$(solana-keygen pubkey tests/test-keypairs/cardinal_payment_manager-keypair.json)/g" {}
-      - run: find . -type f -name "Anchor.toml" -exec sed -i'' -e "s/tests\/\*.spec.ts/tests\/\*.spec.ts --reporter mocha-junit-reporter --reporter-options mochaFile=.\/tests\/out.xml/g" {}
+      - run: find . -type f -name "*" -exec sed -i'' -e "s/pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn/$(solana-keygen pubkey tests/test-keypairs/cardinal_payment_manager-keypair.json)/g" {} +
+      - run: find . -type f -name "Anchor.toml" -exec sed -i'' -e "s/yarn mocha tests\/\*.spec.ts/yarn mocha tests\/\*.spec.ts --reporter mocha-junit-reporter --reporter-options mochaFile=.\/tests\/out.xml/g" {} +
 
       - name: Run tests
         run: solana-test-validator --url https://api.devnet.solana.com --clone metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s --clone PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT --reset & echo $$! > validator.PID

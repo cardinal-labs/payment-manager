@@ -13,8 +13,6 @@ tests/out.xml
 
 # Ignore the build directory for Rust/Anchor
 target
-# Ignore the build directory for Rust/Anchor
-program/target
 # Anchor verified builds directory
 docker-target
 
@@ -40,7 +38,7 @@ test-ledger/
 # Generated IDL types
 artifacts/
 dist/
-src/idls/
+sdk/idl/
 keypairs
 
 site/
