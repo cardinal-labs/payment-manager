@@ -52,7 +52,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all --manifest-path ./Cargo.toml -- --check
+          args: --all --manifest-path ./program/Cargo.toml -- --check
 
   soteria-scan:
     runs-on: ubuntu-latest
