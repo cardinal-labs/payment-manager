@@ -20,7 +20,6 @@ import type { AccountMeta } from "@solana/web3.js";
 import { Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
 import { expect } from "chai";
 import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
-import { handlePaymentWithRoyalties, init } from "../sdk/instruction";
 
 import { getProvider } from "./workspace";
 import { findPaymentManagerAddress } from "../sdk/pda";
@@ -29,10 +28,12 @@ import {
   findAta,
   withFindOrInitAssociatedTokenAccount,
 } from "@cardinal/common";
+import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
 
 describe("Handle payment with royalties", () => {
   const MAKER_FEE = new BN(500);
   const TAKER_FEE = new BN(300);
+  const ROYALTEE_FEE_SHARE = new BN(5000);
   const BASIS_POINTS_DIVISOR = new BN(10000);
   const FEE_SPLIT = new BN(50);
   const paymentAmount = new BN(1000);
@@ -148,19 +149,18 @@ describe("Handle payment with royalties", () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    const [ix] = await init(
+    await withInit(
+      transaction,
       provider.connection,
       provider.wallet,
       paymentManagerName,
-      {
-        feeCollector: feeCollector.publicKey,
-        makerFeeBasisPoints: MAKER_FEE.toNumber(),
-        takerFeeBasisPoints: TAKER_FEE.toNumber(),
-        includeSellerFeeBasisPoints: false,
-      }
+      feeCollector.publicKey,
+      MAKER_FEE.toNumber(),
+      TAKER_FEE.toNumber(),
+      false,
+      ROYALTEE_FEE_SHARE
     );
 
-    transaction.add(ix);
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
         connection: provider.connection,
@@ -304,22 +304,18 @@ describe("Handle payment with royalties", () => {
       ).to.be.rejectedWith(Error);
     });
 
-    transaction.add(
-      await handlePaymentWithRoyalties(
-        provider.connection,
-        provider.wallet,
-        paymentManagerName,
-        {
-          paymentAmount: new BN(paymentAmount),
-          payerTokenAccount: payerTokenAccountId,
-          feeCollectorTokenAccount: feeCollectorTokenAccount,
-          paymentTokenAccount: paymentTokenAccountId,
-          paymentMint: paymentMint.publicKey,
-          mint: rentalMint.publicKey,
-          mintMetadata: metadataId,
-          royaltiesRemainingAccounts: royaltiesRemainingAccounts,
-        }
-      )
+    await withHandlePaymentWithRoyalties(
+      transaction,
+      provider.connection,
+      provider.wallet,
+      paymentManagerName,
+      new BN(paymentAmount),
+      rentalMint.publicKey,
+      metadataId,
+      paymentMint.publicKey,
+      payerTokenAccountId,
+      feeCollectorTokenAccount,
+      paymentTokenAccountId
     );
 
     const txEnvelope = new TransactionEnvelope(

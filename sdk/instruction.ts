@@ -13,21 +13,22 @@ import { CRANK_KEY } from ".";
 
 import type { PAYMENT_MANAGER_PROGRAM } from ".";
 import { PAYMENT_MANAGER_ADDRESS, PAYMENT_MANAGER_IDL } from ".";
-import { findPaymentManagerAddress } from "./pda";
 
-export const init = async (
+export const init = (
   connection: Connection,
   wallet: Wallet,
   name: string,
   params: {
+    paymentManagerId: PublicKey;
     feeCollector: PublicKey;
-    authority?: PublicKey;
+    authority: PublicKey;
     makerFeeBasisPoints: number;
     takerFeeBasisPoints: number;
     includeSellerFeeBasisPoints: boolean;
+    payer: PublicKey;
     royaltyFeeShare?: BN;
   }
-): Promise<[TransactionInstruction, PublicKey]> => {
+): TransactionInstruction => {
   const provider = new AnchorProvider(connection, wallet, {});
 
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
@@ -36,42 +37,37 @@ export const init = async (
     provider
   );
 
-  const [paymentManagerId] = await findPaymentManagerAddress(name);
-
-  return [
-    paymentManagerProgram.instruction.init(
-      {
-        name: name,
-        feeCollector: params.feeCollector,
-        makerFeeBasisPoints: params.makerFeeBasisPoints,
-        takerFeeBasisPoints: params.takerFeeBasisPoints,
-        includeSellerFeeBasisPoints: params.includeSellerFeeBasisPoints,
-        royaltyFeeShare: params.royaltyFeeShare ?? null,
+  return paymentManagerProgram.instruction.init(
+    {
+      name: name,
+      feeCollector: params.feeCollector,
+      makerFeeBasisPoints: params.makerFeeBasisPoints,
+      takerFeeBasisPoints: params.takerFeeBasisPoints,
+      includeSellerFeeBasisPoints: params.includeSellerFeeBasisPoints,
+      royaltyFeeShare: params.royaltyFeeShare ?? null,
+    },
+    {
+      accounts: {
+        paymentManager: params.paymentManagerId,
+        authority: params.authority,
+        payer: params.payer,
+        systemProgram: SystemProgram.programId,
       },
-      {
-        accounts: {
-          paymentManager: paymentManagerId,
-          authority: params.authority || wallet.publicKey,
-          payer: wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
-      }
-    ),
-    paymentManagerId,
-  ];
+    }
+  );
 };
 
-export const managePayment = async (
+export const managePayment = (
   connection: Connection,
   wallet: Wallet,
-  name: string,
   params: {
+    paymentManagerId: PublicKey;
     paymentAmount: BN;
     payerTokenAccount: PublicKey;
     feeCollectorTokenAccount: PublicKey;
     paymentTokenAccount: PublicKey;
   }
-): Promise<TransactionInstruction> => {
+): TransactionInstruction => {
   const provider = new AnchorProvider(connection, wallet, {});
 
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
@@ -80,10 +76,9 @@ export const managePayment = async (
     provider
   );
 
-  const [paymentManagerId] = await findPaymentManagerAddress(name);
   return paymentManagerProgram.instruction.managePayment(params.paymentAmount, {
     accounts: {
-      paymentManager: paymentManagerId,
+      paymentManager: params.paymentManagerId,
       payerTokenAccount: params.payerTokenAccount,
       feeCollectorTokenAccount: params.feeCollectorTokenAccount,
       paymentTokenAccount: params.paymentTokenAccount,
@@ -93,11 +88,11 @@ export const managePayment = async (
   });
 };
 
-export const handlePaymentWithRoyalties = async (
+export const handlePaymentWithRoyalties = (
   connection: Connection,
   wallet: Wallet,
-  name: string,
   params: {
+    paymentManagerId: PublicKey;
     paymentAmount: BN;
     payerTokenAccount: PublicKey;
     feeCollectorTokenAccount: PublicKey;
@@ -107,7 +102,7 @@ export const handlePaymentWithRoyalties = async (
     mintMetadata: PublicKey;
     royaltiesRemainingAccounts: AccountMeta[];
   }
-): Promise<TransactionInstruction> => {
+): TransactionInstruction => {
   const provider = new AnchorProvider(connection, wallet, {});
 
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
@@ -116,12 +111,11 @@ export const handlePaymentWithRoyalties = async (
     provider
   );
 
-  const [paymentManagerId] = await findPaymentManagerAddress(name);
   return paymentManagerProgram.instruction.handlePaymentWithRoyalties(
     params.paymentAmount,
     {
       accounts: {
-        paymentManager: paymentManagerId,
+        paymentManager: params.paymentManagerId,
         payerTokenAccount: params.payerTokenAccount,
         feeCollectorTokenAccount: params.feeCollectorTokenAccount,
         paymentTokenAccount: params.paymentTokenAccount,
@@ -136,12 +130,12 @@ export const handlePaymentWithRoyalties = async (
   );
 };
 
-export const close = async (
+export const close = (
   connection: Connection,
   wallet: Wallet,
-  name: string,
+  paymentManagerId: PublicKey,
   collector?: PublicKey
-): Promise<TransactionInstruction> => {
+): TransactionInstruction => {
   const provider = new AnchorProvider(connection, wallet, {});
 
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
@@ -150,7 +144,6 @@ export const close = async (
     provider
   );
 
-  const [paymentManagerId] = await findPaymentManagerAddress(name);
   return paymentManagerProgram.instruction.close({
     accounts: {
       paymentManager: paymentManagerId,
@@ -160,18 +153,18 @@ export const close = async (
   });
 };
 
-export const update = async (
+export const update = (
   connection: Connection,
   wallet: Wallet,
-  name: string,
   params: {
+    paymentManagerId: PublicKey;
     authority: PublicKey;
     feeCollector: PublicKey;
     makerFeeBasisPoints: number;
     takerFeeBasisPoints: number;
     royaltyFeeShare?: BN;
   }
-): Promise<[TransactionInstruction, PublicKey]> => {
+): TransactionInstruction => {
   const provider = new AnchorProvider(connection, wallet, {});
 
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
@@ -180,25 +173,20 @@ export const update = async (
     provider
   );
 
-  const [paymentManagerId] = await findPaymentManagerAddress(name);
-
-  return [
-    paymentManagerProgram.instruction.update(
-      {
-        authority: params.authority,
-        feeCollector: params.feeCollector,
-        makerFeeBasisPoints: params.makerFeeBasisPoints,
-        takerFeeBasisPoints: params.takerFeeBasisPoints,
-        royaltyFeeShare: params.royaltyFeeShare ?? null,
+  return paymentManagerProgram.instruction.update(
+    {
+      authority: params.authority,
+      feeCollector: params.feeCollector,
+      makerFeeBasisPoints: params.makerFeeBasisPoints,
+      takerFeeBasisPoints: params.takerFeeBasisPoints,
+      royaltyFeeShare: params.royaltyFeeShare ?? null,
+    },
+    {
+      accounts: {
+        paymentManager: params.paymentManagerId,
+        payer: wallet.publicKey,
+        systemProgram: SystemProgram.programId,
       },
-      {
-        accounts: {
-          paymentManager: paymentManagerId,
-          payer: wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
-      }
-    ),
-    paymentManagerId,
-  ];
+    }
+  );
 };
