@@ -22,7 +22,7 @@ export const withInit = async (
   makerFeeBasisPoints: number,
   takerFeeBasisPoints: number,
   includeSellerFeeBasisPoints: boolean,
-  royaltyFeeShare: BN,
+  royaltyFeeShare?: BN,
   authority = wallet.publicKey
 ): Promise<[Transaction, PublicKey]> => {
   const [paymentManagerId] = await findPaymentManagerAddress(name);
