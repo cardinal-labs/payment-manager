@@ -56,6 +56,7 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
 
     // royalties
     let mut fees_paid_out: u64 = 0;
+    let remaining_accs = &mut ctx.remaining_accounts.iter();
     if !ctx.accounts.mint_metadata.data_is_empty() {
         if ctx.accounts.mint_metadata.to_account_info().owner.key() != mpl_token_metadata::id() {
             return Err(error!(ErrorCode::InvalidMintMetadataOwner));
@@ -85,8 +86,6 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
 
         if total_creators_fee > 0 {
             if let Some(creators) = mint_metadata.data.creators {
-                let remaining_accs = &mut ctx.remaining_accounts.iter();
-
                 let creator_amounts: Vec<u64> = creators
                     .clone()
                     .into_iter()
@@ -134,8 +133,31 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
         }
     }
 
-    // pay remaining fees to fee_colector
-    if total_fees.checked_sub(fees_paid_out).expect("Sub error") > 0 {
+    let buy_side_fee = payment_amount
+        .checked_mul(DEFAULT_BUY_SIDE_FEE_SHARE)
+        .unwrap()
+        .checked_div(BASIS_POINTS_DIVISOR.into())
+        .expect("Div error");
+    let mut fee_collector_fee = total_fees.checked_sub(fees_paid_out).expect("Sub error");
+
+    // pay buy side fee
+    let buy_side_token_account_info = next_account_info(remaining_accs)?;
+    let buy_side_token_account = Account::<TokenAccount>::try_from(buy_side_token_account_info);
+    if buy_side_token_account.is_ok() {
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.payer_token_account.to_account_info(),
+            to: buy_side_token_account_info.to_account_info(),
+            authority: ctx.accounts.payer.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(cpi_context, buy_side_fee)?;
+    } else {
+        fee_collector_fee = fee_collector_fee.checked_add(buy_side_fee).expect("Add error");
+    }
+
+    if fee_collector_fee > 0 {
+        // pay remaining fees to fee_colector
         let cpi_accounts = Transfer {
             from: ctx.accounts.payer_token_account.to_account_info(),
             to: ctx.accounts.fee_collector_token_account.to_account_info(),
@@ -143,7 +165,7 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_context, total_fees.checked_sub(fees_paid_out).expect("Add error"))?;
+        token::transfer(cpi_context, fee_collector_fee)?;
     }
 
     // pay target
@@ -154,7 +176,16 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
     };
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_context, payment_amount.checked_sub(total_fees).expect("Sub error").checked_add(taker_fee).expect("Sub error"))?;
+    token::transfer(
+        cpi_context,
+        payment_amount
+            .checked_add(taker_fee)
+            .expect("Add error")
+            .checked_sub(total_fees)
+            .expect("Sub error")
+            .checked_sub(buy_side_fee)
+            .expect("Sub error"),
+    )?;
 
     Ok(())
 }
