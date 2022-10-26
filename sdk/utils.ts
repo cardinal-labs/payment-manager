@@ -307,23 +307,31 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
     for (const creator of metaplexMintData.data.creators) {
       if (creator.share !== 0) {
         const creatorAddress = new web3.PublicKey(creator.address);
-        const creatorMintTokenAccount = excludeCreators?.includes(
-          creator.address.toString()
-        )
-          ? await findAta(paymentMint, creatorAddress, true)
-          : await withFindOrInitAssociatedTokenAccount(
-              transaction,
-              connection,
-              paymentMint,
-              creatorAddress,
-              wallet.publicKey,
-              true
-            );
-        remainingAccounts.push({
-          pubkey: creatorMintTokenAccount,
-          isSigner: false,
-          isWritable: true,
-        });
+        if (paymentMint.toString() === web3.PublicKey.default.toString()) {
+          remainingAccounts.push({
+            pubkey: new web3.PublicKey(creator.address),
+            isSigner: false,
+            isWritable: true,
+          });
+        } else {
+          const creatorMintTokenAccount = excludeCreators?.includes(
+            creator.address
+          )
+            ? await findAta(paymentMint, creatorAddress, true)
+            : await withFindOrInitAssociatedTokenAccount(
+                transaction,
+                connection,
+                paymentMint,
+                creatorAddress,
+                wallet.publicKey,
+                true
+              );
+          remainingAccounts.push({
+            pubkey: creatorMintTokenAccount,
+            isSigner: false,
+            isWritable: true,
+          });
+        }
       }
     }
   }

@@ -25,6 +25,13 @@ pub mod cardinal_payment_manager {
         handle_payment_with_royalties::handler(ctx, payment_amount)
     }
 
+    pub fn handle_native_payment_with_royalties<'key, 'accounts, 'remaining, 'info>(
+        ctx: Context<'key, 'accounts, 'remaining, 'info, HandleNativePaymentWithRoyaltiesCtx<'info>>,
+        payment_amount: u64,
+    ) -> Result<()> {
+        handle_native_payment_with_royalties::handler(ctx, payment_amount)
+    }
+
     pub fn close(ctx: Context<CloseCtx>) -> Result<()> {
         close::handler(ctx)
     }
