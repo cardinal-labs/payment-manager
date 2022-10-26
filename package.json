@@ -1,12 +1,12 @@
 {
   "name": "@cardinal/payment-manager",
-  "version": "1.7.6",
+  "version": "1.7.7",
   "description": "Cardinal payment manager SDK",
   "keywords": [
     "solana",
     "anchor",
     "cardinal",
-    "payment manager"
+    "payment-manager"
   ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

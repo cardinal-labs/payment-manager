@@ -1,13 +1,13 @@
 [package]
 name = "cardinal-payment-manager"
-version = "1.7.5"
+version = "1.7.7"
 description = "Cardinal payment manager"
 edition = "2021"
 homepage = "https://cardinal.so"
 repository = "https://github.com/cardinal-labs/cardinal-payment-manager/"
 authors = ["The Cardinal Team <info@cardinal.so>"]
 license = "AGPL-3.0"
-keywords = ["solana", "cardinal", "payment manager"]
+keywords = ["solana", "cardinal", "payment-manager"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
