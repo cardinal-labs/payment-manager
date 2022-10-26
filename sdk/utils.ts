@@ -162,6 +162,7 @@ export const withRemainingAccountsForPayment = async (
   paymentMint: web3.PublicKey,
   issuerId: web3.PublicKey,
   paymentManagerId: web3.PublicKey,
+  buySideTokenAccountId?: web3.PublicKey,
   options?: {
     payer?: web3.PublicKey;
     receiptMint?: web3.PublicKey | null;
@@ -175,6 +176,7 @@ export const withRemainingAccountsForPayment = async (
       wallet,
       mint,
       paymentMint,
+      buySideTokenAccountId,
       [issuerId.toString()]
     );
   const mintMetadataId = await Metadata.getPDA(mint);
@@ -289,9 +291,10 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
   wallet: Wallet,
   mint: web3.PublicKey,
   paymentMint: web3.PublicKey,
+  buySideTokenAccountId?: web3.PublicKey,
   excludeCreators?: string[]
 ): Promise<web3.AccountMeta[]> => {
-  const creatorsRemainingAccounts: web3.AccountMeta[] = [];
+  const remainingAccounts: web3.AccountMeta[] = [];
   const mintMetadataId = await Metadata.getPDA(mint);
   const accountInfo = await connection.getAccountInfo(mintMetadataId);
   let metaplexMintData: MetadataData | undefined;
@@ -299,10 +302,8 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
     metaplexMintData = MetadataData.deserialize(
       accountInfo?.data as Buffer
     ) as MetadataData;
-  } catch (e) {
-    return [];
-  }
-  if (metaplexMintData.data.creators) {
+  } catch (e) {}
+  if (metaplexMintData && metaplexMintData.data.creators) {
     for (const creator of metaplexMintData.data.creators) {
       if (creator.share !== 0) {
         const creatorAddress = new web3.PublicKey(creator.address);
@@ -318,7 +319,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
               wallet.publicKey,
               true
             );
-        creatorsRemainingAccounts.push({
+        remainingAccounts.push({
           pubkey: creatorMintTokenAccount,
           isSigner: false,
           isWritable: true,
@@ -327,5 +328,16 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
     }
   }
 
-  return creatorsRemainingAccounts;
+  return [
+    ...remainingAccounts,
+    ...(buySideTokenAccountId
+      ? [
+          {
+            pubkey: buySideTokenAccountId,
+            isSigner: false,
+            isWritable: true,
+          },
+        ]
+      : []),
+  ];
 };

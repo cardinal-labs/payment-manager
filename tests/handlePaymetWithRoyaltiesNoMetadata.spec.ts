@@ -1,7 +1,4 @@
-import {
-  findAta,
-  withFindOrInitAssociatedTokenAccount,
-} from "@cardinal/common";
+import { withFindOrInitAssociatedTokenAccount } from "@cardinal/common";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, web3 } from "@project-serum/anchor";
 import { expectTXTable } from "@saberhq/chai-solana";
@@ -10,6 +7,7 @@ import type { Token } from "@solana/spl-token";
 import * as splToken from "@solana/spl-token";
 import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { expect } from "chai";
+import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
@@ -18,6 +16,7 @@ import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with no metadata", () => {
+  const includeSellerFeeBasisPoints = false;
   const MAKER_FEE = new BN(500);
   const TAKER_FEE = new BN(300);
   const ROYALTEE_FEE_SHARE = new BN(5000);
@@ -26,7 +25,7 @@ describe("Handle payment with royalties with no metadata", () => {
   const RECIPIENT_START_PAYMENT_AMOUNT = new BN(10000000000);
   const paymentManagerName = Math.random().toString(36).slice(2, 7);
   const feeCollector = Keypair.generate();
-  const issuer = Keypair.generate();
+  const paymentReceiver = Keypair.generate();
 
   const tokenCreator = Keypair.generate();
   let paymentMint: Token;
@@ -70,7 +69,7 @@ describe("Handle payment with royalties with no metadata", () => {
       feeCollector.publicKey,
       MAKER_FEE.toNumber(),
       TAKER_FEE.toNumber(),
-      false,
+      includeSellerFeeBasisPoints,
       ROYALTEE_FEE_SHARE
     );
 
@@ -119,7 +118,7 @@ describe("Handle payment with royalties with no metadata", () => {
         provider.wallet,
         rentalMint.publicKey,
         paymentMint.publicKey,
-        issuer.publicKey,
+        paymentReceiver.publicKey,
         paymentManagerId
       );
 
@@ -141,6 +140,15 @@ describe("Handle payment with royalties with no metadata", () => {
       null
     );
 
+    let beforePayerTokenAccountAmount = new BN(0);
+    try {
+      beforePayerTokenAccountAmount = (
+        await paymentMintInfo.getAccountInfo(payerTokenAccountId)
+      ).amount;
+    } catch (e) {
+      // pass
+    }
+
     await withHandlePaymentWithRoyalties(
       transaction,
       provider.connection,
@@ -153,6 +161,7 @@ describe("Handle payment with royalties with no metadata", () => {
       payerTokenAccountId,
       feeCollectorTokenAccountId,
       paymentTokenAccountId,
+      undefined,
       []
     );
 
@@ -171,21 +180,27 @@ describe("Handle payment with royalties with no metadata", () => {
 
     const makerFee = paymentAmount.mul(MAKER_FEE).div(BASIS_POINTS_DIVISOR);
     const takerFee = paymentAmount.mul(TAKER_FEE).div(BASIS_POINTS_DIVISOR);
-    const totalFees = makerFee.add(takerFee);
+    let totalFees = makerFee.add(takerFee);
+    let feesPaidOut = new BN(0);
 
+    const sellerFee = new BN(0);
+    totalFees = totalFees.add(sellerFee);
+
+    const buySideFee = paymentAmount
+      .mul(new BN(DEFAULT_BUY_SIDE_FEE_SHARE))
+      .div(BASIS_POINTS_DIVISOR);
     const feeCollectorAtaInfo = await paymentMintInfo.getAccountInfo(
       feeCollectorTokenAccountId
     );
-    expect(Number(feeCollectorAtaInfo.amount)).to.eq(totalFees.toNumber());
+    expect(Number(feeCollectorAtaInfo.amount)).to.eq(
+      totalFees.add(buySideFee).sub(feesPaidOut).toNumber()
+    );
 
-    const issuerAtaId = await findAta(
-      paymentMint.publicKey,
-      issuer.publicKey,
-      true
-    );
-    const issuerAtaInfo = await paymentMintInfo.getAccountInfo(issuerAtaId);
-    expect(Number(issuerAtaInfo.amount)).to.eq(
-      paymentAmount.sub(makerFee).toNumber()
-    );
+    const afterPayerTokenAccountAmount = (
+      await paymentMintInfo.getAccountInfo(payerTokenAccountId)
+    ).amount;
+    expect(
+      beforePayerTokenAccountAmount.sub(afterPayerTokenAccountAmount).toNumber()
+    ).to.eq(paymentAmount.add(takerFee).toNumber());
   });
 });

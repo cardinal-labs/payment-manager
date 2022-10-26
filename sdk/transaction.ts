@@ -77,6 +77,7 @@ export const withHandlePaymentWithRoyalties = async (
   payerTokenAccountId: PublicKey,
   feeCollectorTokenAccountId: PublicKey,
   paymentTokenAccountId: PublicKey,
+  buySideTokenAccountId?: PublicKey,
   excludeCretors = []
 ): Promise<Transaction> => {
   const [paymentManagerId] = await findPaymentManagerAddress(name);
@@ -88,6 +89,7 @@ export const withHandlePaymentWithRoyalties = async (
       wallet,
       mintId,
       paymentMintId,
+      buySideTokenAccountId,
       excludeCretors
     );
 
