@@ -33,7 +33,6 @@ pub struct HandlePaymentWithRoyaltiesCtx<'info> {
 
 pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, HandlePaymentWithRoyaltiesCtx<'info>>, payment_amount: u64) -> Result<()> {
     let payment_manager = &mut ctx.accounts.payment_manager;
-
     // maker-taker fees
     let maker_fee = payment_amount
         .checked_mul(payment_manager.maker_fee_basis_points.into())
@@ -84,76 +83,73 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
             .expect("Add error");
         total_fees = total_fees.checked_add(seller_fee).expect("Add error");
 
-        if total_creators_fee > 0 {
-            if let Some(creators) = mint_metadata.data.creators {
-                let creator_amounts: Vec<u64> = creators
-                    .clone()
-                    .into_iter()
-                    .map(|creator| {
-                        total_creators_fee
-                            .checked_mul(u64::try_from(creator.share).expect("Could not cast u8 to u64"))
-                            .unwrap()
-                            .checked_div(100)
-                            .expect("Div error")
-                    })
-                    .collect();
-                let mut creators_fee_remainder = total_creators_fee.checked_sub(creator_amounts.iter().sum()).expect("Sub error");
-                for creator in creators {
-                    if creator.share != 0 {
-                        let creator_token_account_info = next_account_info(remaining_accs)?;
-                        let creator_token_account = Account::<TokenAccount>::try_from(creator_token_account_info)?;
-                        if creator_token_account.owner != creator.address && creator_token_account.mint != ctx.accounts.payment_mint.key() {
-                            return Err(error!(ErrorCode::InvalidTokenAccount));
-                        }
-                        let share = u64::try_from(creator.share).expect("Could not cast u8 to u64");
-                        let creator_fee_remainder_amount = u64::from(creators_fee_remainder > 0);
-                        let creator_fee_amount = total_creators_fee
-                            .checked_mul(share)
-                            .unwrap()
-                            .checked_div(100)
-                            .expect("Div error")
-                            .checked_add(creator_fee_remainder_amount)
-                            .expect("Add error");
-                        creators_fee_remainder = creators_fee_remainder.checked_sub(creator_fee_remainder_amount).expect("Sub error");
+        if let Some(creators) = mint_metadata.data.creators {
+            let creator_amounts: Vec<u64> = creators
+                .clone()
+                .into_iter()
+                .map(|creator| total_creators_fee.checked_mul(u64::try_from(creator.share).expect("Could not cast u8 to u64")).unwrap())
+                .collect();
+            let creator_amounts_sum: u64 = creator_amounts.iter().sum();
+            let mut creators_fee_remainder = total_creators_fee.checked_sub(creator_amounts_sum.checked_div(100).expect("Div error")).expect("Sub error");
+            for creator in creators {
+                if creator.share != 0 {
+                    let creator_token_account_info = next_account_info(remaining_accs)?;
+                    let creator_token_account = Account::<TokenAccount>::try_from(creator_token_account_info)?;
+                    if creator_token_account.owner != creator.address && creator_token_account.mint != ctx.accounts.payment_mint.key() {
+                        return Err(error!(ErrorCode::InvalidTokenAccount));
+                    }
+                    let share = u64::try_from(creator.share).expect("Could not cast u8 to u64");
+                    let creator_fee_remainder_amount = u64::from(creators_fee_remainder > 0);
+                    let creator_fee_amount = total_creators_fee
+                        .checked_mul(share)
+                        .unwrap()
+                        .checked_div(100)
+                        .expect("Div error")
+                        .checked_add(creator_fee_remainder_amount)
+                        .expect("Add error");
+                    creators_fee_remainder = creators_fee_remainder.checked_sub(creator_fee_remainder_amount).expect("Sub error");
 
-                        if creator_fee_amount > 0 {
-                            fees_paid_out = fees_paid_out.checked_add(creator_fee_amount).expect("Add error");
-                            let cpi_accounts = Transfer {
-                                from: ctx.accounts.payer_token_account.to_account_info(),
-                                to: creator_token_account_info.to_account_info(),
-                                authority: ctx.accounts.payer.to_account_info(),
-                            };
-                            let cpi_program = ctx.accounts.token_program.to_account_info();
-                            let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
-                            token::transfer(cpi_context, creator_fee_amount)?;
-                        }
+                    if creator_fee_amount > 0 {
+                        fees_paid_out = fees_paid_out.checked_add(creator_fee_amount).expect("Add error");
+                        let cpi_accounts = Transfer {
+                            from: ctx.accounts.payer_token_account.to_account_info(),
+                            to: creator_token_account_info.to_account_info(),
+                            authority: ctx.accounts.payer.to_account_info(),
+                        };
+                        let cpi_program = ctx.accounts.token_program.to_account_info();
+                        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+                        token::transfer(cpi_context, creator_fee_amount)?;
                     }
                 }
             }
         }
     }
 
+    // calculate fees
     let buy_side_fee = payment_amount
         .checked_mul(DEFAULT_BUY_SIDE_FEE_SHARE)
         .unwrap()
         .checked_div(BASIS_POINTS_DIVISOR.into())
         .expect("Div error");
-    let mut fee_collector_fee = total_fees.checked_sub(fees_paid_out).expect("Sub error");
+    let mut fee_collector_fee = total_fees.checked_add(buy_side_fee).expect("Add error").checked_sub(fees_paid_out).expect("Sub error");
 
     // pay buy side fee
-    let buy_side_token_account_info = next_account_info(remaining_accs)?;
-    let buy_side_token_account = Account::<TokenAccount>::try_from(buy_side_token_account_info);
-    if buy_side_token_account.is_ok() {
-        let cpi_accounts = Transfer {
-            from: ctx.accounts.payer_token_account.to_account_info(),
-            to: buy_side_token_account_info.to_account_info(),
-            authority: ctx.accounts.payer.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_context, buy_side_fee)?;
-    } else {
-        fee_collector_fee = fee_collector_fee.checked_add(buy_side_fee).expect("Add error");
+    let buy_side_token_account_info = next_account_info(remaining_accs);
+    if buy_side_token_account_info.is_ok() {
+        let buy_side_token_account = Account::<TokenAccount>::try_from(buy_side_token_account_info?);
+        if buy_side_token_account.is_ok() {
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.payer_token_account.to_account_info(),
+                to: buy_side_token_account?.to_account_info(),
+                authority: ctx.accounts.payer.to_account_info(),
+            };
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+            token::transfer(cpi_context, buy_side_fee)?;
+
+            // remove buy side fee out of fee collector fee
+            fee_collector_fee = fee_collector_fee.checked_sub(buy_side_fee).expect("Sub error");
+        }
     }
 
     if fee_collector_fee > 0 {
