@@ -133,6 +133,52 @@ export type CardinalPaymentManager = {
       ];
     },
     {
+      name: "handleNativePaymentWithRoyalties";
+      accounts: [
+        {
+          name: "paymentManager";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "feeCollector";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "paymentTarget";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "payer";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "mint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "mintMetadata";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "paymentAmount";
+          type: "u64";
+        }
+      ];
+    },
+    {
       name: "close";
       accounts: [
         {
@@ -327,6 +373,11 @@ export type CardinalPaymentManager = {
       code: 6006;
       name: "InvalidMintMetadataOwner";
       msg: "Mint metadata is owned by the incorrect program";
+    },
+    {
+      code: 6007;
+      name: "InvalidFeeCollector";
+      msg: "Invalid fee collector";
     }
   ];
 };
@@ -454,6 +505,52 @@ export const IDL: CardinalPaymentManager = {
         },
         {
           name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "paymentAmount",
+          type: "u64",
+        },
+      ],
+    },
+    {
+      name: "handleNativePaymentWithRoyalties",
+      accounts: [
+        {
+          name: "paymentManager",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "feeCollector",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "paymentTarget",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "payer",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "mint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "mintMetadata",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
           isMut: false,
           isSigner: false,
         },
@@ -660,6 +757,11 @@ export const IDL: CardinalPaymentManager = {
       code: 6006,
       name: "InvalidMintMetadataOwner",
       msg: "Mint metadata is owned by the incorrect program",
+    },
+    {
+      code: 6007,
+      name: "InvalidFeeCollector",
+      msg: "Invalid fee collector",
     },
   ],
 };

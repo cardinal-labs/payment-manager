@@ -5,6 +5,7 @@ import BN from "bn.js";
 import { getPaymentManager } from "./accounts";
 import {
   close,
+  handleNativePaymentWithRoyalties,
   handlePaymentWithRoyalties,
   init,
   managePayment,
@@ -101,6 +102,47 @@ export const withHandlePaymentWithRoyalties = async (
       feeCollectorTokenAccount: feeCollectorTokenAccountId,
       paymentTokenAccount: paymentTokenAccountId,
       paymentMint: paymentMintId,
+      mint: mintId,
+      mintMetadata: mintMetadataId,
+      royaltiesRemainingAccounts: remainingAccounts,
+    })
+  );
+  return transaction;
+};
+
+export const withHandleNativePaymentWithRoyalties = async (
+  transaction: Transaction,
+  connection: Connection,
+  wallet: Wallet,
+  name: string,
+  paymentAmount: BN,
+  mintId: PublicKey,
+  mintMetadataId: PublicKey,
+  paymentMintId: PublicKey,
+  feeCollector: PublicKey,
+  paymentTarget: PublicKey,
+  buySideTokenAccountId?: PublicKey,
+  excludeCretors = []
+): Promise<Transaction> => {
+  const [paymentManagerId] = await findPaymentManagerAddress(name);
+
+  const remainingAccounts =
+    await withRemainingAccountsForHandlePaymentWithRoyalties(
+      new Transaction(),
+      connection,
+      wallet,
+      mintId,
+      paymentMintId,
+      buySideTokenAccountId,
+      excludeCretors
+    );
+
+  transaction.add(
+    handleNativePaymentWithRoyalties(connection, wallet, {
+      paymentManagerId: paymentManagerId,
+      paymentAmount: paymentAmount,
+      feeCollector: feeCollector,
+      paymentTarget: paymentTarget,
       mint: mintId,
       mintMetadata: mintMetadataId,
       royaltiesRemainingAccounts: remainingAccounts,

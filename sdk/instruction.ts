@@ -130,6 +130,44 @@ export const handlePaymentWithRoyalties = (
   );
 };
 
+export const handleNativePaymentWithRoyalties = (
+  connection: Connection,
+  wallet: Wallet,
+  params: {
+    paymentManagerId: PublicKey;
+    paymentAmount: BN;
+    feeCollector: PublicKey;
+    paymentTarget: PublicKey;
+    mint: PublicKey;
+    mintMetadata: PublicKey;
+    royaltiesRemainingAccounts: AccountMeta[];
+  }
+): TransactionInstruction => {
+  const provider = new AnchorProvider(connection, wallet, {});
+
+  const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
+    PAYMENT_MANAGER_IDL,
+    PAYMENT_MANAGER_ADDRESS,
+    provider
+  );
+
+  return paymentManagerProgram.instruction.handleNativePaymentWithRoyalties(
+    params.paymentAmount,
+    {
+      accounts: {
+        paymentManager: params.paymentManagerId,
+        feeCollector: params.feeCollector,
+        paymentTarget: params.paymentTarget,
+        payer: wallet.publicKey,
+        mint: params.mint,
+        mintMetadata: params.mintMetadata,
+        systemProgram: SystemProgram.programId,
+      },
+      remainingAccounts: params.royaltiesRemainingAccounts,
+    }
+  );
+};
+
 export const close = (
   connection: Connection,
   wallet: Wallet,

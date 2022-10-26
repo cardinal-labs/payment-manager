@@ -1,8 +1,4 @@
 import {
-  findAta,
-  withFindOrInitAssociatedTokenAccount,
-} from "@cardinal/common";
-import {
   CreateMasterEditionV3,
   CreateMetadataV2,
   Creator,
@@ -18,14 +14,16 @@ import {
   TransactionEnvelope,
 } from "@saberhq/solana-contrib";
 import type { Token } from "@solana/spl-token";
-import * as splToken from "@solana/spl-token";
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
-import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
-import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
+import {
+  withHandleNativePaymentWithRoyalties,
+  withInit,
+} from "../sdk/transaction";
+import { createMint } from "../sdk/utils";
 
 import { getProvider } from "./workspace";
 
@@ -35,9 +33,8 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   const TAKER_FEE = new BN(300);
   const ROYALTEE_FEE_SHARE = new BN(4500);
   const BASIS_POINTS_DIVISOR = new BN(10000);
-  const paymentAmount = new BN(1000);
+  const paymentAmount = new BN(LAMPORTS_PER_SOL);
   const sellerFeeBasisPoints = 100;
-  const RECIPIENT_START_PAYMENT_AMOUNT = new BN(10000000000);
   const paymentManagerName = Math.random().toString(36).slice(2, 7);
   const feeCollector = Keypair.generate();
 
@@ -49,8 +46,8 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   const creator3Share = new BN(55);
   const tokenCreator = Keypair.generate();
   const paymentReceiver = Keypair.generate();
+  const payer = Keypair.generate();
   const buySideReceiver = Keypair.generate();
-  let paymentMint: Token;
   let rentalMint: Token;
 
   before(async () => {
@@ -60,14 +57,41 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(airdropCreator);
-
-    // create payment mint
-    [, paymentMint] = await createMint(
-      provider.connection,
-      tokenCreator,
-      provider.wallet.publicKey,
-      RECIPIENT_START_PAYMENT_AMOUNT.toNumber()
+    const paymentReceiverInfo = await provider.connection.requestAirdrop(
+      paymentReceiver.publicKey,
+      LAMPORTS_PER_SOL
     );
+    await provider.connection.confirmTransaction(paymentReceiverInfo);
+    const buySideReceiverInfo = await provider.connection.requestAirdrop(
+      buySideReceiver.publicKey,
+      LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(buySideReceiverInfo);
+    const feeCollectorInfo = await provider.connection.requestAirdrop(
+      feeCollector.publicKey,
+      LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(feeCollectorInfo);
+    const payerInfo = await provider.connection.requestAirdrop(
+      payer.publicKey,
+      2 * LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(payerInfo);
+    const creator1Info = await provider.connection.requestAirdrop(
+      creator1.publicKey,
+      LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(creator1Info);
+    const creator2Info = await provider.connection.requestAirdrop(
+      creator2.publicKey,
+      LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(creator2Info);
+    const creator3Info = await provider.connection.requestAirdrop(
+      creator3.publicKey,
+      LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(creator3Info);
 
     // create rental mint
     [, rentalMint] = await createMint(
@@ -199,118 +223,49 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   it("Handle payment with royalties with seller fee", async () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
-
     const metadataId = await Metadata.getPDA(rentalMint.publicKey);
-    const [paymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
 
-    const buySideReceiverTokenAccountId =
-      await withFindOrInitAssociatedTokenAccount(
-        transaction,
-        provider.connection,
-        paymentMint.publicKey,
-        buySideReceiver.publicKey,
-        provider.wallet.publicKey,
-        true
-      );
+    const beforeCreator1Amount =
+      (await provider.connection.getAccountInfo(creator1.publicKey))
+        ?.lamports || 0;
+    const beforeCreator2Amount =
+      (await provider.connection.getAccountInfo(creator2.publicKey))
+        ?.lamports || 0;
+    const beforeCreator3Amount =
+      (await provider.connection.getAccountInfo(creator3.publicKey))
+        ?.lamports || 0;
+    const beforeBuysideAmount =
+      (await provider.connection.getAccountInfo(buySideReceiver.publicKey))
+        ?.lamports || 0;
+    const beforeFeeCollectorAmount =
+      (await provider.connection.getAccountInfo(feeCollector.publicKey))
+        ?.lamports || 0;
+    const beforePaymentAmount =
+      (await provider.connection.getAccountInfo(paymentReceiver.publicKey))
+        ?.lamports || 0;
+    const beforePayerAmount =
+      (await provider.connection.getAccountInfo(payer.publicKey))?.lamports ||
+      0;
 
-    const [paymentTokenAccountId, feeCollectorTokenAccount, _accounts] =
-      await withRemainingAccountsForPayment(
-        transaction,
-        provider.connection,
-        provider.wallet,
-        rentalMint.publicKey,
-        paymentMint.publicKey,
-        paymentReceiver.publicKey,
-        paymentManagerId
-      );
-
-    const payerTokenAccountId = await withFindOrInitAssociatedTokenAccount(
+    await withHandleNativePaymentWithRoyalties(
       transaction,
       provider.connection,
-      paymentMint.publicKey,
-      provider.wallet.publicKey,
-      provider.wallet.publicKey,
-      true
-    );
-
-    const paymentMintInfo = new splToken.Token(
-      provider.connection,
-      paymentMint.publicKey,
-      splToken.TOKEN_PROGRAM_ID,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      null
-    );
-    const creator1Ata = await findAta(
-      paymentMint.publicKey,
-      creator1.publicKey,
-      true
-    );
-    const creator2Ata = await findAta(
-      paymentMint.publicKey,
-      creator2.publicKey,
-      true
-    );
-    const creator3Ata = await findAta(
-      paymentMint.publicKey,
-      creator3.publicKey,
-      true
-    );
-
-    expect(async () => {
-      await expect(() =>
-        paymentMintInfo.getAccountInfo(creator1Ata)
-      ).to.be.rejectedWith(Error);
-    });
-    expect(async () => {
-      await expect(() =>
-        paymentMintInfo.getAccountInfo(creator2Ata)
-      ).to.be.rejectedWith(Error);
-    });
-    expect(async () => {
-      await expect(() =>
-        paymentMintInfo.getAccountInfo(creator3Ata)
-      ).to.be.rejectedWith(Error);
-    });
-
-    let beforePaymentTokenAccountAmount = new BN(0);
-    try {
-      beforePaymentTokenAccountAmount = (
-        await paymentMintInfo.getAccountInfo(paymentTokenAccountId)
-      ).amount;
-    } catch (e) {
-      // pass
-    }
-    let beforePayerTokenAccountAmount = new BN(0);
-    try {
-      beforePayerTokenAccountAmount = (
-        await paymentMintInfo.getAccountInfo(payerTokenAccountId)
-      ).amount;
-    } catch (e) {
-      // pass
-    }
-
-    await withHandlePaymentWithRoyalties(
-      transaction,
-      provider.connection,
-      provider.wallet,
+      new SignerWallet(payer),
       paymentManagerName,
       new BN(paymentAmount),
       rentalMint.publicKey,
       metadataId,
-      paymentMint.publicKey,
-      payerTokenAccountId,
-      feeCollectorTokenAccount,
-      paymentTokenAccountId,
-      buySideReceiverTokenAccountId
+      PublicKey.default,
+      feeCollector.publicKey,
+      paymentReceiver.publicKey,
+      buySideReceiver.publicKey,
+      []
     );
 
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
         connection: provider.connection,
-        wallet: provider.wallet,
+        wallet: new SignerWallet(payer),
         opts: provider.opts,
       }),
       [...transaction.instructions]
@@ -358,8 +313,12 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .div(new BN(100))
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator1Funds);
-    const creator1AtaInfo = await paymentMintInfo.getAccountInfo(creator1Ata);
-    expect(Number(creator1AtaInfo.amount)).to.eq(creator1Funds.toNumber());
+    const creator1Info = await provider.connection.getAccountInfo(
+      creator1.publicKey
+    );
+    expect(Number(creator1Info?.lamports)).to.eq(
+      beforeCreator1Amount + creator1Funds.toNumber()
+    );
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
     const creator2Funds = totalCreatorsFee
@@ -367,8 +326,12 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .div(new BN(100))
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator2Funds);
-    const creator2AtaInfo = await paymentMintInfo.getAccountInfo(creator2Ata);
-    expect(Number(creator2AtaInfo.amount)).to.eq(creator2Funds.toNumber());
+    const creator2Info = await provider.connection.getAccountInfo(
+      creator2.publicKey
+    );
+    expect(Number(creator2Info?.lamports)).to.eq(
+      beforeCreator2Amount + creator2Funds.toNumber()
+    );
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
     const creator3Funds = totalCreatorsFee
@@ -376,38 +339,47 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .div(new BN(100))
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator3Funds);
-    const creator3AtaInfo = await paymentMintInfo.getAccountInfo(creator3Ata);
-    expect(Number(creator3AtaInfo.amount)).to.eq(creator3Funds.toNumber());
+    const creator3Info = await provider.connection.getAccountInfo(
+      creator3.publicKey
+    );
+    expect(Number(creator3Info?.lamports)).to.eq(
+      beforeCreator3Amount + creator3Funds.toNumber()
+    );
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
     const buySideFee = paymentAmount
       .mul(new BN(DEFAULT_BUY_SIDE_FEE_SHARE))
       .div(BASIS_POINTS_DIVISOR);
-    const buySideReceiverAtaInfo = await paymentMintInfo.getAccountInfo(
-      buySideReceiverTokenAccountId
+    const buySideReceiverInfo = await provider.connection.getAccountInfo(
+      buySideReceiver.publicKey
     );
-    expect(Number(buySideReceiverAtaInfo.amount)).to.eq(buySideFee.toNumber());
-    const feeCollectorAtaInfo = await paymentMintInfo.getAccountInfo(
-      feeCollectorTokenAccount
+    expect(Number(buySideReceiverInfo?.lamports)).to.eq(
+      beforeBuysideAmount + buySideFee.toNumber()
     );
-    expect(Number(feeCollectorAtaInfo.amount)).to.eq(
-      totalFees.sub(feesPaidOut).toNumber()
+    const feeCollectorInfo = await provider.connection.getAccountInfo(
+      feeCollector.publicKey
     );
-
-    const paymentAtaInfo = await paymentMintInfo.getAccountInfo(
-      paymentTokenAccountId
-    );
-    expect(Number(paymentAtaInfo.amount)).to.eq(
-      beforePaymentTokenAccountAmount
-        .add(paymentAmount.add(takerFee).sub(totalFees).sub(buySideFee))
-        .toNumber()
+    expect(Number(feeCollectorInfo?.lamports)).to.eq(
+      beforeFeeCollectorAmount + totalFees.sub(feesPaidOut).toNumber()
     );
 
-    const afterPayerTokenAccountAmount = (
-      await paymentMintInfo.getAccountInfo(payerTokenAccountId)
-    ).amount;
+    const paymentReceiverInfo = await provider.connection.getAccountInfo(
+      paymentReceiver.publicKey
+    );
+    expect(Number(paymentReceiverInfo?.lamports)).to.eq(
+      beforePaymentAmount +
+        paymentAmount.add(takerFee).sub(totalFees).sub(buySideFee).toNumber()
+    );
+
+    const afterPayerAmount =
+      (await provider.connection.getAccountInfo(payer.publicKey))?.lamports ||
+      0;
+
+    // account for gas fees
     expect(
-      beforePayerTokenAccountAmount.sub(afterPayerTokenAccountAmount).toNumber()
-    ).to.eq(paymentAmount.add(takerFee).toNumber());
+      beforePayerAmount -
+        afterPayerAmount -
+        paymentAmount.add(takerFee).toNumber()
+    ).to.be.lessThanOrEqual(5000);
   });
 });
