@@ -17,9 +17,10 @@ pub struct HandleNativePaymentWithRoyaltiesCtx<'info> {
     #[account(mut, constraint = fee_collector.key() == payment_manager.fee_collector @ ErrorCode::InvalidFeeCollector)]
     /// CHECK: This is not dangerous because of the check above
     fee_collector: UncheckedAccount<'info>,
-    #[account(mut)]
     /// CHECK: This is not dangerous because this is just the pubkey that collects the payment
+    #[account(mut)]
     payment_target: UncheckedAccount<'info>,
+    #[account(mut)]
     payer: Signer<'info>,
 
     mint: Box<Account<'info, Mint>>,
