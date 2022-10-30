@@ -77,7 +77,7 @@
     "@saberhq/chai-solana": "^1.14.9",
     "@saberhq/solana-contrib": "^1.14.9",
     "@solana/buffer-layout": "^4.0.0",
-    "@solana/spl-token": "^0.1.8",
+    "@solana/spl-token": "^0.3.6",
     "@solana/web3.js": "^1.66.2"
   },
   "packageManager": "yarn@3.1.1"
