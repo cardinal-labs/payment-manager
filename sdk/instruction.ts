@@ -9,10 +9,9 @@ import type {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { SystemProgram } from "@solana/web3.js";
-import { CRANK_KEY } from ".";
 
 import type { PAYMENT_MANAGER_PROGRAM } from ".";
-import { PAYMENT_MANAGER_ADDRESS, PAYMENT_MANAGER_IDL } from ".";
+import { CRANK_KEY, PAYMENT_MANAGER_ADDRESS, PAYMENT_MANAGER_IDL } from ".";
 
 export const init = (
   connection: Connection,

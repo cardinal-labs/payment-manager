@@ -9,7 +9,7 @@ import { Keypair } from "@solana/web3.js";
 
 import type { PAYMENT_MANAGER_PROGRAM, PaymentManagerData } from ".";
 import { PAYMENT_MANAGER_ADDRESS, PAYMENT_MANAGER_IDL } from ".";
-import { AccountData } from "./utils";
+import type { AccountData } from "./utils";
 
 export const getPaymentManager = async (
   connection: Connection,

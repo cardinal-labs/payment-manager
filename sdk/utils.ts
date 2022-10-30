@@ -1,8 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import type { Wallet } from "@saberhq/solana-contrib";
-import * as splToken from "@solana/spl-token";
-import { Connection } from "@solana/web3.js";
-import * as web3 from "@solana/web3.js";
 import {
   findAta,
   tryGetAccount,
@@ -12,6 +8,11 @@ import {
   Metadata,
   MetadataData,
 } from "@metaplex-foundation/mpl-token-metadata";
+import type { Wallet } from "@saberhq/solana-contrib";
+import * as splToken from "@solana/spl-token";
+import type { Connection } from "@solana/web3.js";
+import * as web3 from "@solana/web3.js";
+
 import { getPaymentManager } from "./accounts";
 
 export type AccountData<T> = {
@@ -302,6 +303,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
     metaplexMintData = MetadataData.deserialize(
       accountInfo?.data as Buffer
     ) as MetadataData;
+    // eslint-disable-next-line no-empty
   } catch (e) {}
   if (metaplexMintData && metaplexMintData.data.creators) {
     for (const creator of metaplexMintData.data.creators) {

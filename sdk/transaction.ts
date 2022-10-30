@@ -1,7 +1,9 @@
 import { tryGetAccount } from "@cardinal/common";
-import { Wallet } from "@saberhq/solana-contrib";
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import BN from "bn.js";
+import type { Wallet } from "@saberhq/solana-contrib";
+import type { Connection, PublicKey } from "@solana/web3.js";
+import { Transaction } from "@solana/web3.js";
+import type BN from "bn.js";
+
 import { getPaymentManager } from "./accounts";
 import {
   close,

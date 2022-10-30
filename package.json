@@ -28,11 +28,17 @@
     "docs:generate": "typedoc --excludePrivate --includeVersion --out site/ sdk/index.ts"
   },
   "devDependencies": {
+    "@rushstack/eslint-patch": "^1.2.0",
+    "@saberhq/eslint-config-react": "^2.1.0",
+    "@saberhq/tsconfig": "^2.1.0",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.3",
     "@types/mocha": "^10.0.0",
     "@types/node": "^18.11.3",
     "bn.js": "^5.2.0",
+    "eslint": "^8.26.0",
+    "eslint-import-resolver-node": "^0.3.6",
+    "eslint-plugin-import": "^2.26.0",
     "jsbi": "^4.3.0",
     "mocha": "^10.1.0",
     "ts-mocha": "^10.0.0",
@@ -70,6 +76,7 @@
     "@saberhq/anchor-contrib": "^1.14.9",
     "@saberhq/chai-solana": "^1.14.9",
     "@saberhq/solana-contrib": "^1.14.9",
+    "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.66.2"
   },
