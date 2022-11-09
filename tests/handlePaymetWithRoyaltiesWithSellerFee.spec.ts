@@ -19,14 +19,15 @@ import {
 } from "@saberhq/solana-contrib";
 import type { Token } from "@solana/spl-token";
 import * as splToken from "@solana/spl-token";
-import { AccountMeta, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import type { AccountMeta } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { expect } from "chai";
+
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
 import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
-
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with seller fee", () => {

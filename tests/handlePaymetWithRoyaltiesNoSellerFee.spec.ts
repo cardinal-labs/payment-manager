@@ -1,4 +1,8 @@
 import {
+  findAta,
+  withFindOrInitAssociatedTokenAccount,
+} from "@cardinal/common";
+import {
   CreateMasterEditionV3,
   CreateMetadataV2,
   Creator,
@@ -16,20 +20,15 @@ import {
 import type { Token } from "@solana/spl-token";
 import * as splToken from "@solana/spl-token";
 import type { AccountMeta } from "@solana/web3.js";
-
 import { Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
 import { expect } from "chai";
-import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
 
-import { getProvider } from "./workspace";
-import { findPaymentManagerAddress } from "../sdk/pda";
-import { getPaymentManager } from "../sdk/accounts";
-import {
-  findAta,
-  withFindOrInitAssociatedTokenAccount,
-} from "@cardinal/common";
-import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
+import { getPaymentManager } from "../sdk/accounts";
+import { findPaymentManagerAddress } from "../sdk/pda";
+import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
+import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
+import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties", () => {
   const includeSellerFeeBasisPoints = false;

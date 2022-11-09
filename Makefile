@@ -10,6 +10,7 @@ install:
 build:
 	anchor build
 	yarn idl:generate
+	yarn lint
 
 start:
 	solana-test-validator --url https://api.devnet.solana.com \

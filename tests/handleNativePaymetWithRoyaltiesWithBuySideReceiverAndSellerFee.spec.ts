@@ -16,6 +16,7 @@ import {
 import type { Token } from "@solana/spl-token";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
+
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
@@ -24,7 +25,6 @@ import {
   withInit,
 } from "../sdk/transaction";
 import { createMint } from "../sdk/utils";
-
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with buy side receiver and seller fee", () => {

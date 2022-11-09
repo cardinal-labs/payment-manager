@@ -5,10 +5,10 @@ import { SolanaProvider, TransactionEnvelope } from "@saberhq/solana-contrib";
 import { Keypair, Transaction } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { expect } from "chai";
+
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withClose, withInit } from "../sdk/transaction";
-
 import { getProvider } from "./workspace";
 
 describe("Init again and close payment manager", () => {

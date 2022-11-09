@@ -23,7 +23,7 @@
     "clean": "rm -fr dist/",
     "idl:generate": "./scripts/generate-idls-types.sh",
     "typecheck": "tsc",
-    "lint": "eslint . --cache",
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --fix",
     "lint:ci": "eslint . --max-warnings=0",
     "docs:generate": "typedoc --excludePrivate --includeVersion --out site/ sdk/index.ts"
   },
