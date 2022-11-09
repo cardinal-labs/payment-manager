@@ -1,6 +1,6 @@
 {
   "name": "@cardinal/payment-manager",
-  "version": "1.7.9",
+  "version": "2.0.0",
   "description": "Cardinal payment manager SDK",
   "keywords": [
     "solana",
