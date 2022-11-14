@@ -12,7 +12,8 @@ import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
-import { createMint, withRemainingAccountsForPayment } from "../sdk/utils";
+import { withRemainingAccountsForPayment } from "../sdk/utils";
+import { createMint } from "./utils";
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with no metadata", () => {

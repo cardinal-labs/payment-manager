@@ -24,7 +24,7 @@ import {
   withHandleNativePaymentWithRoyalties,
   withInit,
 } from "../sdk/transaction";
-import { createMint } from "../sdk/utils";
+import { createMint } from "./utils";
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with buy side receiver and seller fee", () => {
