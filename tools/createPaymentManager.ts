@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import * as anchor from "@project-serum/anchor";
 import { SignerWallet } from "@saberhq/solana-contrib";
 import { PublicKey } from "@solana/web3.js";
@@ -7,12 +10,10 @@ import { BN } from "bn.js";
 import { connectionFor, tryGetAccount } from "@cardinal/common";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withInit } from "../sdk/transaction";
-import { executeTransaction } from "../sdk/utils";
 import { getPaymentManager } from "../sdk/accounts";
+import { executeTransaction, keypairFrom } from "./utils";
 
-const wallet = web3Js.Keypair.fromSecretKey(
-  anchor.utils.bytes.bs58.decode(anchor.utils.bytes.bs58.encode([]))
-); // your wallet's secret key
+const wallet = keypairFrom(process.env.WALLET ?? "");
 
 export type PaymentManagerParams = {
   feeCollector: PublicKey;
@@ -26,33 +27,24 @@ export type PaymentManagerParams = {
 const main = async (
   paymentManagerName: string,
   params: PaymentManagerParams,
-  cluster: web3Js.Cluster = "devnet"
+  cluster: web3Js.Cluster = "mainnet-beta"
 ) => {
   const connection = connectionFor(cluster);
   const transaction = new web3Js.Transaction();
-  transaction.add(
-    (
-      await withInit(
-        transaction,
-        connection,
-        new SignerWallet(wallet),
-        paymentManagerName,
-        params.feeCollector,
-        params.makerFeeBasisPoints,
-        params.takerFeeBasisPoints,
-        params.includeSellerFeeBasisPoints,
-        params.royaltyFeeShare,
-        params.authority
-      )
-    )[0]
+  await withInit(
+    transaction,
+    connection,
+    new SignerWallet(wallet),
+    paymentManagerName,
+    params.feeCollector,
+    params.makerFeeBasisPoints,
+    params.takerFeeBasisPoints,
+    params.includeSellerFeeBasisPoints,
+    params.royaltyFeeShare,
+    params.authority
   );
   try {
-    await executeTransaction(
-      connection,
-      new SignerWallet(wallet),
-      transaction,
-      {}
-    );
+    await executeTransaction(connection, transaction, new SignerWallet(wallet));
   } catch (e) {
     console.log(`Transactionn failed: ${e}`);
   }
@@ -69,13 +61,13 @@ const main = async (
   }
 };
 
-const paymentManagerName = "cardinal-marketplace";
+const paymentManagerName = "cardinal-stake-pool";
 const params: PaymentManagerParams = {
   feeCollector: new PublicKey("cpmaMZyBQiPxpeuxNsQhW7N8z1o9yaNdLgiPhWGUEiX"),
   authority: new PublicKey("cpmaMZyBQiPxpeuxNsQhW7N8z1o9yaNdLgiPhWGUEiX"),
-  makerFeeBasisPoints: 100,
+  makerFeeBasisPoints: 5000,
   takerFeeBasisPoints: 0,
-  includeSellerFeeBasisPoints: true,
+  includeSellerFeeBasisPoints: false,
   royaltyFeeShare: new BN(0),
 };
 

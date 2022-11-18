@@ -4,13 +4,12 @@ import { PublicKey } from "@solana/web3.js";
 import * as web3Js from "@solana/web3.js";
 import { connectionFor, tryGetAccount } from "@cardinal/common";
 import { withUpdate } from "../sdk/transaction";
-import { executeTransaction } from "../sdk/utils";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { getPaymentManager } from "../sdk/accounts";
+import { executeTransaction, keypairFrom } from "./utils";
 
-const wallet = web3Js.Keypair.fromSecretKey(
-  anchor.utils.bytes.bs58.decode(anchor.utils.bytes.bs58.encode([]))
-); // your wallet's secret key
+const wallet = keypairFrom(process.env.WALLET ?? "");
+
 export type PaymentManagerParams = {
   feeCollector?: PublicKey;
   authority?: PublicKey;
@@ -27,27 +26,18 @@ const main = async (
 ) => {
   const connection = connectionFor(cluster);
   const transaction = new web3Js.Transaction();
-  transaction.add(
-    (
-      await withUpdate(
-        transaction,
-        connection,
-        new SignerWallet(wallet),
-        paymentManagerName,
-        params.feeCollector,
-        params.makerFeeBasisPoints,
-        params.takerFeeBasisPoints,
-        params.royaltyFeeShare
-      )
-    )[0]
+  await withUpdate(
+    transaction,
+    connection,
+    new SignerWallet(wallet),
+    paymentManagerName,
+    params.feeCollector,
+    params.makerFeeBasisPoints,
+    params.takerFeeBasisPoints,
+    params.royaltyFeeShare
   );
   try {
-    await executeTransaction(
-      connection,
-      new SignerWallet(wallet),
-      transaction,
-      {}
-    );
+    await executeTransaction(connection, transaction, new SignerWallet(wallet));
   } catch (e) {
     console.log(`Transactionn failed: ${e}`);
   }
