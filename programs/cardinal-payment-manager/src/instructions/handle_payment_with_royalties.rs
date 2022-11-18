@@ -95,7 +95,7 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
                 if creator.share != 0 {
                     let creator_token_account_info = next_account_info(remaining_accs)?;
                     let creator_token_account = Account::<TokenAccount>::try_from(creator_token_account_info)?;
-                    if creator_token_account.owner != creator.address && creator_token_account.mint != ctx.accounts.payment_mint.key() {
+                    if creator_token_account.owner != creator.address || creator_token_account.mint != ctx.accounts.payment_mint.key() {
                         return Err(error!(ErrorCode::InvalidTokenAccount));
                     }
                     let share = u64::try_from(creator.share).expect("Could not cast u8 to u64");

@@ -95,6 +95,9 @@ pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts,
             for creator in creators {
                 if creator.share != 0 {
                     let creator_info = next_account_info(remaining_accs)?;
+                    if creator_info.key() != creator.address {
+                        return Err(error!(ErrorCode::InvalidCreatorAddress));
+                    }
                     let share = u64::try_from(creator.share).expect("Could not cast u8 to u64");
                     let creator_fee_remainder_amount = u64::from(creators_fee_remainder > 0);
                     let creator_fee_amount = total_creators_fee
