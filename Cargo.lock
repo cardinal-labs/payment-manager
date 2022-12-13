@@ -833,13 +833,14 @@ dependencies = [
 
 [[package]]
 name = "mpl-token-metadata"
-version = "1.4.3"
+version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e719d7e0b5a9d97c7fd4d6f52ebfc32f1e3942e068173e47355f8c275656488a"
+checksum = "5510fddaf6e7e334a3e2480d9520527246628d95611274e6cfe357dc9e901c36"
 dependencies = [
  "arrayref",
  "borsh",
  "mpl-token-vault",
+ "mpl-utils",
  "num-derive",
  "num-traits",
  "shank",
@@ -861,6 +862,18 @@ dependencies = [
  "solana-program",
  "spl-token",
  "thiserror",
+]
+
+[[package]]
+name = "mpl-utils"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "330468b3ea93d306ed5ae5e389b0b64cfbc43fcd29a4eeae74e20f13c979e7a5"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "solana-program",
+ "spl-token",
 ]
 
 [[package]]
@@ -1307,18 +1320,18 @@ dependencies = [
 
 [[package]]
 name = "shank"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90b0d7b8998cc311310854451e7f5903cf3a151ca93ef6aa2b8b6c369a037b21"
+checksum = "b63e565b5e95ad88ab38f312e89444c749360641c509ef2de0093b49f55974a5"
 dependencies = [
  "shank_macro",
 ]
 
 [[package]]
 name = "shank_macro"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3a37d6cf5df84eb622cb6fc74071d5d773c6a23b9ec55691db7b6a8c2286926"
+checksum = "63927d22a1e8b74bda98cc6e151fcdf178b7abb0dc6c4f81e0bbf5ffe2fc4ec8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1328,9 +1341,9 @@ dependencies = [
 
 [[package]]
 name = "shank_macro_impl"
-version = "0.0.10"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1314ff5d5a3dffd9b93de1463e2b6afc2350f17596d7d9b3fe0924c9edd250df"
+checksum = "40ce03403df682f80f4dc1efafa87a4d0cb89b03726d0565e6364bdca5b9a441"
 dependencies = [
  "anyhow",
  "proc-macro2",
