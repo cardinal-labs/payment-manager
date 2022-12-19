@@ -2,8 +2,8 @@ import {
   AnchorProvider,
   BorshAccountsCoder,
   Program,
+  Wallet,
 } from "@project-serum/anchor";
-import { SignerWallet } from "@saberhq/solana-contrib";
 import type { Connection, PublicKey } from "@solana/web3.js";
 import { Keypair } from "@solana/web3.js";
 
@@ -17,7 +17,7 @@ export const getPaymentManager = async (
 ): Promise<AccountData<PaymentManagerData>> => {
   const provider = new AnchorProvider(
     connection,
-    new SignerWallet(Keypair.generate()),
+    new Wallet(Keypair.generate()),
     {}
   );
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(
@@ -41,7 +41,7 @@ export const getPaymentManagers = async (
 ): Promise<AccountData<PaymentManagerData>[]> => {
   const provider = new AnchorProvider(
     connection,
-    new SignerWallet(Keypair.generate()),
+    new Wallet(Keypair.generate()),
     {}
   );
   const paymentManagerProgram = new Program<PAYMENT_MANAGER_PROGRAM>(

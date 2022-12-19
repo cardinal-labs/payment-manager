@@ -1,6 +1,5 @@
 import { connectionFor, tryGetAccount } from "@cardinal/common";
-import type * as anchor from "@project-serum/anchor";
-import { SignerWallet } from "@saberhq/solana-contrib";
+import * as anchor from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import * as web3Js from "@solana/web3.js";
 
@@ -30,7 +29,7 @@ const main = async (
   await withUpdate(
     transaction,
     connection,
-    new SignerWallet(wallet),
+    new anchor.Wallet(wallet),
     paymentManagerName,
     params.feeCollector,
     params.makerFeeBasisPoints,
@@ -38,7 +37,11 @@ const main = async (
     params.royaltyFeeShare
   );
   try {
-    await executeTransaction(connection, transaction, new SignerWallet(wallet));
+    await executeTransaction(
+      connection,
+      transaction,
+      new anchor.Wallet(wallet)
+    );
   } catch (e) {
     console.log(`Transaction failed: `, e);
   }
