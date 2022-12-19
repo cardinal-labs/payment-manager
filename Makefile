@@ -11,6 +11,7 @@ build:
 	anchor build
 	yarn idl:generate
 	yarn lint
+	yarn build
 
 start:
 	solana-test-validator --url https://api.devnet.solana.com \
