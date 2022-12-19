@@ -48,7 +48,6 @@
     "@solana/web3.js": "^1.66.2"
   },
   "devDependencies": {
-    "@saberhq/tsconfig": "^2.1.0",
     "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.3",
     "@saberhq/chai-solana": "^1.14.9",
