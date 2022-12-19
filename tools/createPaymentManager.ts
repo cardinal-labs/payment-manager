@@ -1,17 +1,17 @@
-import * as dotenv from "dotenv";
-dotenv.config();
-
-import * as anchor from "@project-serum/anchor";
+import { connectionFor, tryGetAccount } from "@cardinal/common";
+import type * as anchor from "@project-serum/anchor";
 import { SignerWallet } from "@saberhq/solana-contrib";
 import { PublicKey } from "@solana/web3.js";
 import * as web3Js from "@solana/web3.js";
-
 import { BN } from "bn.js";
-import { connectionFor, tryGetAccount } from "@cardinal/common";
+import * as dotenv from "dotenv";
+
+import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withInit } from "../sdk/transaction";
-import { getPaymentManager } from "../sdk/accounts";
 import { executeTransaction, keypairFrom } from "./utils";
+
+dotenv.config();
 
 const wallet = keypairFrom(process.env.WALLET ?? "");
 
@@ -46,7 +46,7 @@ const main = async (
   try {
     await executeTransaction(connection, transaction, new SignerWallet(wallet));
   } catch (e) {
-    console.log(`Transactionn failed: ${e}`);
+    console.log(`Transaction failed: `, e);
   }
   const [paymentManagerId] = await findPaymentManagerAddress(
     paymentManagerName

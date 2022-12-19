@@ -1,11 +1,12 @@
-import * as anchor from "@project-serum/anchor";
+import { connectionFor, tryGetAccount } from "@cardinal/common";
+import type * as anchor from "@project-serum/anchor";
 import { SignerWallet } from "@saberhq/solana-contrib";
 import { PublicKey } from "@solana/web3.js";
 import * as web3Js from "@solana/web3.js";
-import { connectionFor, tryGetAccount } from "@cardinal/common";
-import { withUpdate } from "../sdk/transaction";
-import { findPaymentManagerAddress } from "../sdk/pda";
+
 import { getPaymentManager } from "../sdk/accounts";
+import { findPaymentManagerAddress } from "../sdk/pda";
+import { withUpdate } from "../sdk/transaction";
 import { executeTransaction, keypairFrom } from "./utils";
 
 const wallet = keypairFrom(process.env.WALLET ?? "");
@@ -39,7 +40,7 @@ const main = async (
   try {
     await executeTransaction(connection, transaction, new SignerWallet(wallet));
   } catch (e) {
-    console.log(`Transactionn failed: ${e}`);
+    console.log(`Transaction failed: `, e);
   }
   const [paymentManagerId] = await findPaymentManagerAddress(
     paymentManagerName
