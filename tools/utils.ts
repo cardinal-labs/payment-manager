@@ -1,13 +1,12 @@
 import { utils } from "@project-serum/anchor";
-import { Wallet } from "@project-serum/anchor/dist/cjs/provider";
-import {
+import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
+import type {
   Connection,
-  Keypair,
-  sendAndConfirmRawTransaction,
   SendTransactionError,
   Signer,
   Transaction,
 } from "@solana/web3.js";
+import { Keypair, sendAndConfirmRawTransaction } from "@solana/web3.js";
 
 export const keypairFrom = (s: string, n?: string): Keypair => {
   try {

@@ -1,5 +1,6 @@
 import { connectionFor, tryGetAccount } from "@cardinal/common";
-import { Cluster } from "@solana/web3.js";
+import type { Cluster } from "@solana/web3.js";
+
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 
