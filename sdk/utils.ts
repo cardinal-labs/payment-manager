@@ -7,7 +7,7 @@ import {
   Metadata,
   MetadataData,
 } from "@metaplex-foundation/mpl-token-metadata";
-import type { Wallet } from "@saberhq/solana-contrib";
+import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
 import * as splToken from "@solana/spl-token";
 import type { Connection } from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
