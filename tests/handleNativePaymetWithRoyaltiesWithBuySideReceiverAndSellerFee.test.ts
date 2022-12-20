@@ -1,4 +1,4 @@
-import { executeTransaction } from "@cardinal/common";
+import { createMint, executeTransaction } from "@cardinal/common";
 import {
   CreateMasterEditionV3,
   CreateMetadataV2,
@@ -8,7 +8,7 @@ import {
   Metadata,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, Wallet, web3 } from "@project-serum/anchor";
-import type { Token } from "@solana/spl-token";
+import type { PublicKey } from "@solana/web3.js";
 import { Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
 
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
@@ -18,7 +18,6 @@ import {
   withHandleNativePaymentWithRoyalties,
   withInit,
 } from "../sdk/transaction";
-import { createMint } from "./utils";
 import type { CardinalProvider } from "./workspace";
 import { getProvider } from "./workspace";
 
@@ -43,7 +42,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   const paymentReceiver = Keypair.generate();
   const payer = Keypair.generate();
   const buySideReceiver = Keypair.generate();
-  let rentalMint: Token;
+  let mintId: PublicKey;
   let provider: CardinalProvider;
 
   beforeAll(async () => {
@@ -89,17 +88,16 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     );
     await provider.connection.confirmTransaction(creator3Info);
 
-    // create rental mint
-    [, rentalMint] = await createMint(
+    [, mintId] = await createMint(
       provider.connection,
-      tokenCreator,
-      provider.wallet.publicKey,
-      1,
-      tokenCreator.publicKey
+      new Wallet(tokenCreator),
+      {
+        target: provider.wallet.publicKey,
+      }
     );
 
     // specify creators shares
-    const metadataId = await Metadata.getPDA(rentalMint.publicKey);
+    const metadataId = await Metadata.getPDA(mintId);
     const metadataTx = new CreateMetadataV2(
       { feePayer: tokenCreator.publicKey },
       {
@@ -135,19 +133,19 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
           uses: null,
         }),
         updateAuthority: tokenCreator.publicKey,
-        mint: rentalMint.publicKey,
+        mint: mintId,
         mintAuthority: tokenCreator.publicKey,
       }
     );
 
-    const masterEditionId = await MasterEdition.getPDA(rentalMint.publicKey);
+    const masterEditionId = await MasterEdition.getPDA(mintId);
     const masterEditionTx = new CreateMasterEditionV3(
       { feePayer: tokenCreator.publicKey },
       {
         edition: masterEditionId,
         metadata: metadataId,
         updateAuthority: tokenCreator.publicKey,
-        mint: rentalMint.publicKey,
+        mint: mintId,
         mintAuthority: tokenCreator.publicKey,
         maxSupply: new BN(1),
       }
@@ -227,7 +225,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       {
         paymentManagerName,
         paymentAmount: new BN(paymentAmount),
-        mintId: rentalMint.publicKey,
+        mintId: mintId,
         feeCollectorId: feeCollector.publicKey,
         paymentTargetId: paymentReceiver.publicKey,
         buySideTokenAccountId: buySideReceiver.publicKey,
