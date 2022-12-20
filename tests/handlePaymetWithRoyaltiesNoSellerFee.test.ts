@@ -1,4 +1,5 @@
 import {
+  executeTransaction,
   findAta,
   withFindOrInitAssociatedTokenAccount,
 } from "@cardinal/common";
@@ -10,18 +11,11 @@ import {
   MasterEdition,
   Metadata,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { BN, web3 } from "@project-serum/anchor";
-import { expectTXTable } from "@saberhq/chai-solana";
-import {
-  SignerWallet,
-  SolanaProvider,
-  TransactionEnvelope,
-} from "@saberhq/solana-contrib";
+import { BN, Wallet, web3 } from "@project-serum/anchor";
 import type { Token } from "@solana/spl-token";
 import * as splToken from "@solana/spl-token";
 import type { AccountMeta } from "@solana/web3.js";
 import { Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
-import { expect } from "chai";
 
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
@@ -56,7 +50,7 @@ describe("Handle payment with royalties", () => {
   let rentalMint: Token;
   let provider: CardinalProvider;
 
-  before(async () => {
+  beforeAll(async () => {
     provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
@@ -135,18 +129,15 @@ describe("Handle payment with royalties", () => {
         maxSupply: new BN(1),
       }
     );
-    const txEnvelope = new TransactionEnvelope(
-      SolanaProvider.init({
-        connection: provider.connection,
-        wallet: new SignerWallet(tokenCreator),
-      }),
-      [...metadataTx.instructions, ...masterEditionTx.instructions]
+    const transaction = new Transaction().add(
+      ...metadataTx.instructions,
+      ...masterEditionTx.instructions
     );
-
-    await expectTXTable(txEnvelope, "test", {
-      verbosity: "error",
-      formatLogs: true,
-    }).to.be.fulfilled;
+    await executeTransaction(
+      provider.connection,
+      transaction,
+      new Wallet(tokenCreator)
+    );
   });
 
   it("Create payment manager", async () => {
@@ -161,41 +152,28 @@ describe("Handle payment with royalties", () => {
       royaltyFeeShare: ROYALTEE_FEE_SHARE,
     });
 
-    const txEnvelope = new TransactionEnvelope(
-      SolanaProvider.init({
-        connection: provider.connection,
-        wallet: provider.wallet,
-      }),
-      [...transaction.instructions]
-    );
-    await expectTXTable(txEnvelope, "Create Payment Manager", {
-      verbosity: "error",
-      formatLogs: true,
-    }).to.be.fulfilled;
+    await executeTransaction(provider.connection, transaction, provider.wallet);
 
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
       checkPaymentManagerId
     );
-    expect(paymentManagerData.parsed.name).to.eq(paymentManagerName);
-    expect(paymentManagerData.parsed.makerFeeBasisPoints).to.eq(
+    expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
+    expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(
       MAKER_FEE.toNumber()
     );
-    expect(paymentManagerData.parsed.takerFeeBasisPoints).to.eq(
+    expect(paymentManagerData.parsed.takerFeeBasisPoints).toEqual(
       TAKER_FEE.toNumber()
     );
-    expect(paymentManagerData.parsed.royaltyFeeShare?.toNumber()).to.eq(
+    expect(paymentManagerData.parsed.royaltyFeeShare?.toNumber()).toEqual(
       ROYALTEE_FEE_SHARE.toNumber()
     );
   });
 
   it("Handle payment with royalties", async () => {
-    const transaction = new web3.Transaction();
-
-    const metadataId = await Metadata.getPDA(rentalMint.publicKey);
     const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
-
+    const transaction = new web3.Transaction();
     const [paymentTokenAccountId, feeCollectorTokenAccount, _accounts] =
       await withRemainingAccountsForPayment(
         transaction,
@@ -285,21 +263,10 @@ describe("Handle payment with royalties", () => {
       true
     );
 
-    expect(async () => {
-      await expect(() =>
-        paymentMintInfo.getAccountInfo(creator1Ata)
-      ).to.be.rejectedWith(Error);
-    });
-    expect(async () => {
-      await expect(() =>
-        paymentMintInfo.getAccountInfo(creator2Ata)
-      ).to.be.rejectedWith(Error);
-    });
-    expect(async () => {
-      await expect(() =>
-        paymentMintInfo.getAccountInfo(creator3Ata)
-      ).to.be.rejectedWith(Error);
-    });
+    await expect(paymentMintInfo.getAccountInfo(creator1Ata)).rejects.toThrow();
+    await expect(paymentMintInfo.getAccountInfo(creator2Ata)).rejects.toThrow();
+    await expect(paymentMintInfo.getAccountInfo(creator3Ata)).rejects.toThrow();
+
     let beforePayerTokenAccountAmount = new BN(0);
     try {
       beforePayerTokenAccountAmount = (
@@ -325,17 +292,7 @@ describe("Handle payment with royalties", () => {
       }
     );
 
-    const txEnvelope = new TransactionEnvelope(
-      SolanaProvider.init({
-        connection: provider.connection,
-        wallet: provider.wallet,
-      }),
-      [...transaction.instructions]
-    );
-    await expectTXTable(txEnvelope, "Handle Payment With Royalties", {
-      verbosity: "error",
-      formatLogs: true,
-    }).to.be.fulfilled;
+    await executeTransaction(provider.connection, transaction, provider.wallet);
 
     const makerFee = paymentAmount.mul(MAKER_FEE).div(BASIS_POINTS_DIVISOR);
     const takerFee = paymentAmount.mul(TAKER_FEE).div(BASIS_POINTS_DIVISOR);
@@ -372,7 +329,7 @@ describe("Handle payment with royalties", () => {
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator1Funds);
     const creator1AtaInfo = await paymentMintInfo.getAccountInfo(creator1Ata);
-    expect(Number(creator1AtaInfo.amount)).to.eq(creator1Funds.toNumber());
+    expect(Number(creator1AtaInfo.amount)).toEqual(creator1Funds.toNumber());
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
     const creator2Funds = totalCreatorsFee
@@ -381,7 +338,7 @@ describe("Handle payment with royalties", () => {
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator2Funds);
     const creator2AtaInfo = await paymentMintInfo.getAccountInfo(creator2Ata);
-    expect(Number(creator2AtaInfo.amount)).to.eq(creator2Funds.toNumber());
+    expect(Number(creator2AtaInfo.amount)).toEqual(creator2Funds.toNumber());
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
     const creator3Funds = totalCreatorsFee
@@ -390,7 +347,7 @@ describe("Handle payment with royalties", () => {
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator3Funds);
     const creator3AtaInfo = await paymentMintInfo.getAccountInfo(creator3Ata);
-    expect(Number(creator3AtaInfo.amount)).to.eq(creator3Funds.toNumber());
+    expect(Number(creator3AtaInfo.amount)).toEqual(creator3Funds.toNumber());
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
     const buySideFee = paymentAmount
@@ -399,7 +356,7 @@ describe("Handle payment with royalties", () => {
     const feeCollectorAtaInfo = await paymentMintInfo.getAccountInfo(
       feeCollectorTokenAccount
     );
-    expect(Number(feeCollectorAtaInfo.amount)).to.eq(
+    expect(Number(feeCollectorAtaInfo.amount)).toEqual(
       totalFees.add(buySideFee).sub(feesPaidOut).toNumber()
     );
 
@@ -408,6 +365,6 @@ describe("Handle payment with royalties", () => {
     ).amount;
     expect(
       beforePayerTokenAccountAmount.sub(afterPayerTokenAccountAmount).toNumber()
-    ).to.eq(paymentAmount.add(takerFee).toNumber());
+    ).toEqual(paymentAmount.add(takerFee).toNumber());
   });
 });

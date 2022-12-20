@@ -1,10 +1,7 @@
-import { tryGetAccount } from "@cardinal/common";
+import { executeTransaction, tryGetAccount } from "@cardinal/common";
 import { web3 } from "@project-serum/anchor";
-import { expectTXTable } from "@saberhq/chai-solana";
-import { SolanaProvider, TransactionEnvelope } from "@saberhq/solana-contrib";
 import { Keypair, Transaction } from "@solana/web3.js";
 import { BN } from "bn.js";
-import { expect } from "chai";
 
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
@@ -19,7 +16,7 @@ describe("Init again and close payment manager", () => {
   const feeCollector = Keypair.generate();
   let provider: CardinalProvider;
 
-  before(async () => {
+  beforeAll(async () => {
     provider = await getProvider();
   });
 
@@ -34,27 +31,16 @@ describe("Init again and close payment manager", () => {
       includeSellerFeeBasisPoints: false,
       royaltyFeeShare: new BN(0),
     });
-
-    const txEnvelope = new TransactionEnvelope(
-      SolanaProvider.init({
-        connection: provider.connection,
-        wallet: provider.wallet,
-      }),
-      [...transaction.instructions]
-    );
-    await expectTXTable(txEnvelope, "Create Payment Manager", {
-      verbosity: "error",
-      formatLogs: true,
-    }).to.be.fulfilled;
+    await executeTransaction(provider.connection, transaction, provider.wallet);
 
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
       checkPaymentManagerId
     );
-    expect(paymentManagerData.parsed.name).to.eq(paymentManagerName);
-    expect(paymentManagerData.parsed.makerFeeBasisPoints).to.eq(MAKER_FEE);
-    expect(paymentManagerData.parsed.takerFeeBasisPoints).to.eq(TAKER_FEE);
+    expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
+    expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(MAKER_FEE);
+    expect(paymentManagerData.parsed.takerFeeBasisPoints).toEqual(TAKER_FEE);
   });
 
   it("Init again fails", async () => {
@@ -67,16 +53,11 @@ describe("Init again and close payment manager", () => {
       includeSellerFeeBasisPoints: false,
       royaltyFeeShare: new BN(0),
     });
-    expect(async () => {
-      await expectTXTable(
-        new TransactionEnvelope(
-          SolanaProvider.init(provider),
-          transaction.instructions
-        ),
-        "Fail to init again",
-        { verbosity: "error" }
-      ).to.be.rejectedWith(Error);
-    });
+    await expect(
+      executeTransaction(provider.connection, transaction, provider.wallet, {
+        silent: true,
+      })
+    ).rejects.toThrow();
   });
 
   it("Close", async () => {
@@ -87,29 +68,18 @@ describe("Init again and close payment manager", () => {
     await withClose(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
     });
-
-    await expectTXTable(
-      new TransactionEnvelope(
-        SolanaProvider.init(provider),
-        transaction.instructions
-      ),
-      "Close payment manager",
-      {
-        verbosity: "error",
-        formatLogs: true,
-      }
-    ).to.be.fulfilled;
+    await executeTransaction(provider.connection, transaction, provider.wallet);
 
     const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await tryGetAccount(() =>
       getPaymentManager(provider.connection, paymentManagerId)
     );
-    expect(paymentManagerData).to.eq(null);
+    expect(paymentManagerData).toEqual(null);
 
     const balanceAfter = await provider.connection.getBalance(
       provider.wallet.publicKey
     );
 
-    expect(balanceAfter).to.greaterThan(balanceBefore);
+    expect(balanceAfter).toBeGreaterThan(balanceBefore);
   });
 });
