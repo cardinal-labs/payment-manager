@@ -1,12 +1,10 @@
 import {
   findAta,
+  findMintMetadataId,
   tryGetAccount,
   withFindOrInitAssociatedTokenAccount,
 } from "@cardinal/common";
-import {
-  Metadata,
-  MetadataData,
-} from "@metaplex-foundation/mpl-token-metadata";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
 import { getAccount } from "@solana/spl-token";
 import type { AccountMeta, Connection, Transaction } from "@solana/web3.js";
@@ -39,7 +37,7 @@ export const withRemainingAccountsForPayment = async (
       buySideTokenAccountId,
       [issuerId.toString()]
     );
-  const mintMetadataId = await Metadata.getPDA(mint);
+  const mintMetadataId = findMintMetadataId(mint);
   const paymentRemainingAccounts = [
     {
       pubkey: paymentMint,
@@ -150,15 +148,16 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
   excludeCreators?: string[]
 ): Promise<AccountMeta[]> => {
   const remainingAccounts: AccountMeta[] = [];
-  const mintMetadataId = await Metadata.getPDA(mint);
-  const accountInfo = await connection.getAccountInfo(mintMetadataId);
-  let metaplexMintData: MetadataData | undefined;
+  let metaplexMintData: Metadata | undefined;
   try {
-    metaplexMintData = MetadataData.deserialize(
-      accountInfo?.data as Buffer
-    ) as MetadataData;
-    // eslint-disable-next-line no-empty
-  } catch (e) {}
+    const mintMetadataId = findMintMetadataId(mint);
+    metaplexMintData = await Metadata.fromAccountAddress(
+      connection,
+      mintMetadataId
+    );
+  } catch (e) {
+    // pass
+  }
   if (metaplexMintData && metaplexMintData.data.creators) {
     for (const creator of metaplexMintData.data.creators) {
       if (creator.share !== 0) {
@@ -171,7 +170,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
           });
         } else {
           const creatorMintTokenAccount = excludeCreators?.includes(
-            creator.address
+            creator.address.toString()
           )
             ? await findAta(paymentMint, creatorAddress, true)
             : await withFindOrInitAssociatedTokenAccount(
