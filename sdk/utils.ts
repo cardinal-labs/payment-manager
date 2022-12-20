@@ -1,7 +1,7 @@
 import {
   findAta,
   findMintMetadataId,
-  tryGetAccount,
+  tryNull,
   withFindOrInitAssociatedTokenAccount,
 } from "@cardinal/common";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -82,7 +82,7 @@ export const withRemainingAccountsForPayment = async (
           true
         );
 
-    const paymentManager = await tryGetAccount(() =>
+    const paymentManager = await tryNull(
       getPaymentManager(connection, paymentManagerId)
     );
     const feeCollectorTokenAccountId =
@@ -118,7 +118,7 @@ export const withRemainingAccountsForPayment = async (
           payer,
           true
         );
-    const paymentManager = await tryGetAccount(() =>
+    const paymentManager = await tryNull(
       getPaymentManager(connection, paymentManagerId)
     );
     const feeCollectorTokenAccountId =
