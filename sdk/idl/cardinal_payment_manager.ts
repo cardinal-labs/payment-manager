@@ -1,5 +1,5 @@
 export type CardinalPaymentManager = {
-  version: "2.1.1";
+  version: "2.2.0";
   name: "cardinal_payment_manager";
   instructions: [
     {
@@ -383,7 +383,7 @@ export type CardinalPaymentManager = {
 };
 
 export const IDL: CardinalPaymentManager = {
-  version: "2.1.1",
+  version: "2.2.0",
   name: "cardinal_payment_manager",
   instructions: [
     {
