@@ -1,9 +1,9 @@
+import type { AccountData } from "@cardinal/common";
 import { fetchIdlAccount } from "@cardinal/common";
 import type { Connection, PublicKey } from "@solana/web3.js";
 
 import type { PAYMENT_MANAGER_PROGRAM, PaymentManagerData } from ".";
 import { PAYMENT_MANAGER_IDL } from ".";
-import type { AccountData } from "./utils";
 
 export const getPaymentManager = async (
   connection: Connection,
