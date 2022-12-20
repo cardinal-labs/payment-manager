@@ -8,26 +8,26 @@ import {
   MetadataData,
 } from "@metaplex-foundation/mpl-token-metadata";
 import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
-import * as splToken from "@solana/spl-token";
-import type { Connection } from "@solana/web3.js";
-import * as web3 from "@solana/web3.js";
+import { getAccount } from "@solana/spl-token";
+import type { AccountMeta, Connection, Transaction } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 
 import { getPaymentManager } from "./accounts";
 
 export const withRemainingAccountsForPayment = async (
-  transaction: web3.Transaction,
+  transaction: Transaction,
   connection: Connection,
   wallet: Wallet,
-  mint: web3.PublicKey,
-  paymentMint: web3.PublicKey,
-  issuerId: web3.PublicKey,
-  paymentManagerId: web3.PublicKey,
-  buySideTokenAccountId?: web3.PublicKey,
+  mint: PublicKey,
+  paymentMint: PublicKey,
+  issuerId: PublicKey,
+  paymentManagerId: PublicKey,
+  buySideTokenAccountId?: PublicKey,
   options?: {
-    payer?: web3.PublicKey;
-    receiptMint?: web3.PublicKey | null;
+    payer?: PublicKey;
+    receiptMint?: PublicKey | null;
   }
-): Promise<[web3.PublicKey, web3.PublicKey, web3.AccountMeta[]]> => {
+): Promise<[PublicKey, PublicKey, AccountMeta[]]> => {
   const payer = options?.payer ?? wallet.publicKey;
   const royaltiesRemainingAccounts =
     await withRemainingAccountsForHandlePaymentWithRoyalties(
@@ -65,13 +65,8 @@ export const withRemainingAccountsForPayment = async (
     // get holder of receipt mint
     const receiptTokenAccountId = receiptMintLargestAccount.value[0]?.address;
     if (!receiptTokenAccountId) throw new Error("No token accounts found");
-    const receiptMintToken = new splToken.Token(
+    const receiptTokenAccount = await getAccount(
       connection,
-      options.receiptMint,
-      splToken.TOKEN_PROGRAM_ID,
-      web3.Keypair.generate()
-    );
-    const receiptTokenAccount = await receiptMintToken.getAccountInfo(
       receiptTokenAccountId
     );
 
@@ -146,15 +141,15 @@ export const withRemainingAccountsForPayment = async (
 };
 
 export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
-  transaction: web3.Transaction,
+  transaction: Transaction,
   connection: Connection,
   wallet: Wallet,
-  mint: web3.PublicKey,
-  paymentMint: web3.PublicKey,
-  buySideTokenAccountId?: web3.PublicKey,
+  mint: PublicKey,
+  paymentMint: PublicKey,
+  buySideTokenAccountId?: PublicKey,
   excludeCreators?: string[]
-): Promise<web3.AccountMeta[]> => {
-  const remainingAccounts: web3.AccountMeta[] = [];
+): Promise<AccountMeta[]> => {
+  const remainingAccounts: AccountMeta[] = [];
   const mintMetadataId = await Metadata.getPDA(mint);
   const accountInfo = await connection.getAccountInfo(mintMetadataId);
   let metaplexMintData: MetadataData | undefined;
@@ -167,10 +162,10 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
   if (metaplexMintData && metaplexMintData.data.creators) {
     for (const creator of metaplexMintData.data.creators) {
       if (creator.share !== 0) {
-        const creatorAddress = new web3.PublicKey(creator.address);
-        if (paymentMint.toString() === web3.PublicKey.default.toString()) {
+        const creatorAddress = new PublicKey(creator.address);
+        if (paymentMint.toString() === PublicKey.default.toString()) {
           remainingAccounts.push({
-            pubkey: new web3.PublicKey(creator.address),
+            pubkey: new PublicKey(creator.address),
             isSigner: false,
             isWritable: true,
           });
