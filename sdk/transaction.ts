@@ -195,6 +195,7 @@ export const withUpdate = async (
   wallet: Wallet,
   params: {
     paymentManagerName: string;
+    authority?: PublicKey;
     feeCollectorId?: PublicKey;
     makerFeeBasisPoints?: number;
     takerFeeBasisPoints?: number;
@@ -212,7 +213,7 @@ export const withUpdate = async (
   transaction.add(
     await paymentManagerProgram(connection, wallet)
       .methods.update({
-        authority: checkPaymentManager.parsed.authority ?? wallet.publicKey,
+        authority: params.authority ?? checkPaymentManager.parsed.authority,
         feeCollector:
           checkPaymentManager.parsed.feeCollector ?? params.feeCollectorId,
         makerFeeBasisPoints:

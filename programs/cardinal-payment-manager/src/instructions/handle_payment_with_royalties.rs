@@ -31,7 +31,7 @@ pub struct HandlePaymentWithRoyaltiesCtx<'info> {
     // creator token account
 }
 
-pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, HandlePaymentWithRoyaltiesCtx<'info>>, payment_amount: u64) -> Result<()> {
+pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, HandlePaymentWithRoyaltiesCtx<'info>>, payment_amount: u64) -> Result<()> {
     let payment_manager = &mut ctx.accounts.payment_manager;
     // maker-taker fees
     let maker_fee = payment_amount

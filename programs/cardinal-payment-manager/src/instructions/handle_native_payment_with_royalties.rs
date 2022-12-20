@@ -32,7 +32,7 @@ pub struct HandleNativePaymentWithRoyaltiesCtx<'info> {
     // creator
 }
 
-pub fn handler<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, HandleNativePaymentWithRoyaltiesCtx<'info>>, payment_amount: u64) -> Result<()> {
+pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, HandleNativePaymentWithRoyaltiesCtx<'info>>, payment_amount: u64) -> Result<()> {
     let payment_manager = &mut ctx.accounts.payment_manager;
     // maker-taker fees
     let maker_fee = payment_amount
