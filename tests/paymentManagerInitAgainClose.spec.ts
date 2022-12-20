@@ -9,6 +9,7 @@ import { expect } from "chai";
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withClose, withInit } from "../sdk/transaction";
+import type { CardinalProvider } from "./workspace";
 import { getProvider } from "./workspace";
 
 describe("Init again and close payment manager", () => {
@@ -16,9 +17,13 @@ describe("Init again and close payment manager", () => {
   const TAKER_FEE = 300;
   const paymentManagerName = Math.random().toString(36).slice(2, 7);
   const feeCollector = Keypair.generate();
+  let provider: CardinalProvider;
+
+  before(async () => {
+    provider = await getProvider();
+  });
 
   it("Create payment manager", async () => {
-    const provider = getProvider();
     const transaction = new web3.Transaction();
 
     await withInit(transaction, provider.connection, provider.wallet, {
@@ -34,7 +39,6 @@ describe("Init again and close payment manager", () => {
       SolanaProvider.init({
         connection: provider.connection,
         wallet: provider.wallet,
-        opts: provider.opts,
       }),
       [...transaction.instructions]
     );
@@ -54,8 +58,6 @@ describe("Init again and close payment manager", () => {
   });
 
   it("Init again fails", async () => {
-    const provider = getProvider();
-
     const transaction = new Transaction();
     await withInit(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
@@ -78,7 +80,6 @@ describe("Init again and close payment manager", () => {
   });
 
   it("Close", async () => {
-    const provider = getProvider();
     const balanceBefore = await provider.connection.getBalance(
       provider.wallet.publicKey
     );

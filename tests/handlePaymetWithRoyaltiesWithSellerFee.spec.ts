@@ -29,6 +29,7 @@ import { findPaymentManagerAddress } from "../sdk/pda";
 import { withHandlePaymentWithRoyalties, withInit } from "../sdk/transaction";
 import { withRemainingAccountsForPayment } from "../sdk/utils";
 import { createMint } from "./utils";
+import type { CardinalProvider } from "./workspace";
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with seller fee", () => {
@@ -53,9 +54,10 @@ describe("Handle payment with royalties with seller fee", () => {
   const paymentReceiver = Keypair.generate();
   let paymentMint: Token;
   let rentalMint: Token;
+  let provider: CardinalProvider;
 
   before(async () => {
-    const provider = getProvider();
+    provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
       LAMPORTS_PER_SOL
@@ -137,7 +139,6 @@ describe("Handle payment with royalties with seller fee", () => {
       SolanaProvider.init({
         connection: provider.connection,
         wallet: new SignerWallet(tokenCreator),
-        opts: provider.opts,
       }),
       [...metadataTx.instructions, ...masterEditionTx.instructions]
     );
@@ -149,7 +150,6 @@ describe("Handle payment with royalties with seller fee", () => {
   });
 
   it("Create payment manager", async () => {
-    const provider = getProvider();
     const transaction = new web3.Transaction();
 
     await withInit(transaction, provider.connection, provider.wallet, {
@@ -165,7 +165,6 @@ describe("Handle payment with royalties with seller fee", () => {
       SolanaProvider.init({
         connection: provider.connection,
         wallet: provider.wallet,
-        opts: provider.opts,
       }),
       [...transaction.instructions]
     );
@@ -193,7 +192,6 @@ describe("Handle payment with royalties with seller fee", () => {
   });
 
   it("Handle payment with royalties with seller fee", async () => {
-    const provider = getProvider();
     const transaction = new web3.Transaction();
 
     const metadataId = await Metadata.getPDA(rentalMint.publicKey);
@@ -332,7 +330,6 @@ describe("Handle payment with royalties with seller fee", () => {
       SolanaProvider.init({
         connection: provider.connection,
         wallet: provider.wallet,
-        opts: provider.opts,
       }),
       [...transaction.instructions]
     );

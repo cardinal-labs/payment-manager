@@ -25,6 +25,7 @@ import {
   withInit,
 } from "../sdk/transaction";
 import { createMint } from "./utils";
+import type { CardinalProvider } from "./workspace";
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with buy side receiver and seller fee", () => {
@@ -49,9 +50,10 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   const payer = Keypair.generate();
   const buySideReceiver = Keypair.generate();
   let rentalMint: Token;
+  let provider: CardinalProvider;
 
   before(async () => {
-    const provider = getProvider();
+    provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
       LAMPORTS_PER_SOL
@@ -160,7 +162,6 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       SolanaProvider.init({
         connection: provider.connection,
         wallet: new SignerWallet(tokenCreator),
-        opts: provider.opts,
       }),
       [...metadataTx.instructions, ...masterEditionTx.instructions]
     );
@@ -172,7 +173,6 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   });
 
   it("Create payment manager", async () => {
-    const provider = getProvider();
     const transaction = new web3.Transaction();
 
     await withInit(transaction, provider.connection, provider.wallet, {
@@ -188,7 +188,6 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       SolanaProvider.init({
         connection: provider.connection,
         wallet: provider.wallet,
-        opts: provider.opts,
       }),
       [...transaction.instructions]
     );
@@ -216,9 +215,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   });
 
   it("Handle payment with royalties with seller fee", async () => {
-    const provider = getProvider();
     const transaction = new web3.Transaction();
-    const metadataId = await Metadata.getPDA(rentalMint.publicKey);
 
     const beforeCreator1Amount =
       (await provider.connection.getAccountInfo(creator1.publicKey))
@@ -261,7 +258,6 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       SolanaProvider.init({
         connection: provider.connection,
         wallet: new SignerWallet(payer),
-        opts: provider.opts,
       }),
       [...transaction.instructions]
     );
