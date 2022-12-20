@@ -1,28 +1,34 @@
-import { connectionFor, tryGetAccount } from "@cardinal/common";
-import type { Cluster } from "@solana/web3.js";
+import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
+import type { Connection } from "@solana/web3.js";
 
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 
-const main = async (
-  paymentManagerName: string,
-  cluster: Cluster = "devnet"
+export const commandName = "getPaymentManager";
+export const description = "Get a payment manager";
+
+export const getArgs = (_connection: Connection, _wallet: Wallet) => ({
+  paymentManagerName: "cardinal-stake-pool",
+});
+
+export const handler = async (
+  connection: Connection,
+  _wallet: Wallet,
+  args: ReturnType<typeof getArgs>
 ) => {
-  const connection = connectionFor(cluster);
-  const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
-  const paymentManagerData = await tryGetAccount(() =>
-    getPaymentManager(connection, paymentManagerId)
+  const paymentManagerId = findPaymentManagerAddress(args.paymentManagerName);
+  const paymentManagerData = await getPaymentManager(
+    connection,
+    paymentManagerId
   );
-  if (!paymentManagerData) {
-    console.log("Error: Failed to get payment manager");
-  } else {
-    console.log(
-      `Got payment manager ${paymentManagerName} (${paymentManagerId.toString()})`,
-      paymentManagerData
-    );
-  }
+  console.log(
+    `[success] Found payment manager ${
+      args.paymentManagerName
+    } (${paymentManagerId.toString()})`,
+    JSON.stringify(
+      { pubkey: paymentManagerData.pubkey, parsed: paymentManagerData.parsed },
+      null,
+      2
+    )
+  );
 };
-
-const paymentManagerName = "cardinal-mini-royale";
-
-main(paymentManagerName).catch((e) => console.log(e));
