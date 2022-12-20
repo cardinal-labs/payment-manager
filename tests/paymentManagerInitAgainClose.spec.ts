@@ -21,17 +21,14 @@ describe("Init again and close payment manager", () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    await withInit(
-      transaction,
-      provider.connection,
-      provider.wallet,
+    await withInit(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
-      feeCollector.publicKey,
-      MAKER_FEE,
-      TAKER_FEE,
-      false,
-      new BN(0)
-    );
+      feeCollectorId: feeCollector.publicKey,
+      makerFeeBasisPoints: MAKER_FEE,
+      takerFeeBasisPoints: TAKER_FEE,
+      includeSellerFeeBasisPoints: false,
+      royaltyFeeShare: new BN(0),
+    });
 
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
@@ -46,9 +43,7 @@ describe("Init again and close payment manager", () => {
       formatLogs: true,
     }).to.be.fulfilled;
 
-    const [checkPaymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
       checkPaymentManagerId
@@ -62,17 +57,14 @@ describe("Init again and close payment manager", () => {
     const provider = getProvider();
 
     const transaction = new Transaction();
-    await withInit(
-      transaction,
-      provider.connection,
-      provider.wallet,
+    await withInit(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
-      feeCollector.publicKey,
-      MAKER_FEE,
-      TAKER_FEE,
-      false,
-      new BN(0)
-    );
+      feeCollectorId: feeCollector.publicKey,
+      makerFeeBasisPoints: MAKER_FEE,
+      takerFeeBasisPoints: TAKER_FEE,
+      includeSellerFeeBasisPoints: false,
+      royaltyFeeShare: new BN(0),
+    });
     expect(async () => {
       await expectTXTable(
         new TransactionEnvelope(
@@ -91,13 +83,9 @@ describe("Init again and close payment manager", () => {
       provider.wallet.publicKey
     );
     const transaction = new Transaction();
-    await withClose(
-      transaction,
-      provider.connection,
-      provider.wallet,
+    await withClose(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
-      provider.wallet.publicKey
-    );
+    });
 
     await expectTXTable(
       new TransactionEnvelope(
@@ -111,9 +99,7 @@ describe("Init again and close payment manager", () => {
       }
     ).to.be.fulfilled;
 
-    const [paymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await tryGetAccount(() =>
       getPaymentManager(provider.connection, paymentManagerId)
     );

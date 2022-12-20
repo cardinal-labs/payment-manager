@@ -1,5 +1,4 @@
 import { withFindOrInitAssociatedTokenAccount } from "@cardinal/common";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, web3 } from "@project-serum/anchor";
 import { expectTXTable } from "@saberhq/chai-solana";
 import { SolanaProvider, TransactionEnvelope } from "@saberhq/solana-contrib";
@@ -62,17 +61,14 @@ describe("Handle payment with royalties with no metadata", () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    await withInit(
-      transaction,
-      provider.connection,
-      provider.wallet,
+    await withInit(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
-      feeCollector.publicKey,
-      MAKER_FEE.toNumber(),
-      TAKER_FEE.toNumber(),
+      feeCollectorId: feeCollector.publicKey,
+      makerFeeBasisPoints: MAKER_FEE.toNumber(),
+      takerFeeBasisPoints: TAKER_FEE.toNumber(),
       includeSellerFeeBasisPoints,
-      ROYALTEE_FEE_SHARE
-    );
+      royaltyFeeShare: ROYALTEE_FEE_SHARE,
+    });
 
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
@@ -87,9 +83,7 @@ describe("Handle payment with royalties with no metadata", () => {
       formatLogs: true,
     }).to.be.fulfilled;
 
-    const [checkPaymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
       checkPaymentManagerId
@@ -106,11 +100,7 @@ describe("Handle payment with royalties with no metadata", () => {
   it("Handle payment with royalties", async () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
-
-    const metadataId = await Metadata.getPDA(rentalMint.publicKey);
-    const [paymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
 
     const [paymentTokenAccountId, feeCollectorTokenAccountId, _accounts] =
       await withRemainingAccountsForPayment(
@@ -154,16 +144,16 @@ describe("Handle payment with royalties with no metadata", () => {
       transaction,
       provider.connection,
       provider.wallet,
-      paymentManagerName,
-      new BN(paymentAmount),
-      rentalMint.publicKey,
-      metadataId,
-      paymentMint.publicKey,
-      payerTokenAccountId,
-      feeCollectorTokenAccountId,
-      paymentTokenAccountId,
-      undefined,
-      []
+      {
+        paymentManagerName,
+        paymentAmount: new BN(paymentAmount),
+        mintId: rentalMint.publicKey,
+        paymentMintId: paymentMint.publicKey,
+        payerTokenAccountId: payerTokenAccountId,
+        feeCollectorTokenAccountId: feeCollectorTokenAccountId,
+        paymentTokenAccountId: paymentTokenAccountId,
+        excludeCretors: [],
+      }
     );
 
     const txEnvelope = new TransactionEnvelope(

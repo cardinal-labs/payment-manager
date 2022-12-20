@@ -45,9 +45,7 @@ const main = async (
   } catch (e) {
     console.log(`Transaction failed: `, e);
   }
-  const [paymentManagerId] = await findPaymentManagerAddress(
-    paymentManagerName
-  );
+  const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
   const paymentManagerData = await tryGetAccount(() =>
     getPaymentManager(connection, paymentManagerId)
   );

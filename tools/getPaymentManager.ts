@@ -9,9 +9,7 @@ const main = async (
   cluster: Cluster = "devnet"
 ) => {
   const connection = connectionFor(cluster);
-  const [paymentManagerId] = await findPaymentManagerAddress(
-    paymentManagerName
-  );
+  const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
   const paymentManagerData = await tryGetAccount(() =>
     getPaymentManager(connection, paymentManagerId)
   );

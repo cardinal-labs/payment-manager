@@ -152,17 +152,14 @@ describe("Handle payment with royalties", () => {
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    await withInit(
-      transaction,
-      provider.connection,
-      provider.wallet,
+    await withInit(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
-      feeCollector.publicKey,
-      MAKER_FEE.toNumber(),
-      TAKER_FEE.toNumber(),
+      feeCollectorId: feeCollector.publicKey,
+      makerFeeBasisPoints: MAKER_FEE.toNumber(),
+      takerFeeBasisPoints: TAKER_FEE.toNumber(),
       includeSellerFeeBasisPoints,
-      ROYALTEE_FEE_SHARE
-    );
+      royaltyFeeShare: ROYALTEE_FEE_SHARE,
+    });
 
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
@@ -177,9 +174,7 @@ describe("Handle payment with royalties", () => {
       formatLogs: true,
     }).to.be.fulfilled;
 
-    const [checkPaymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
       checkPaymentManagerId
@@ -201,9 +196,7 @@ describe("Handle payment with royalties", () => {
     const transaction = new web3.Transaction();
 
     const metadataId = await Metadata.getPDA(rentalMint.publicKey);
-    const [paymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
 
     const [paymentTokenAccountId, feeCollectorTokenAccount, _accounts] =
       await withRemainingAccountsForPayment(
@@ -322,14 +315,16 @@ describe("Handle payment with royalties", () => {
       transaction,
       provider.connection,
       provider.wallet,
-      paymentManagerName,
-      new BN(paymentAmount),
-      rentalMint.publicKey,
-      metadataId,
-      paymentMint.publicKey,
-      payerTokenAccountId,
-      feeCollectorTokenAccount,
-      paymentTokenAccountId
+      {
+        paymentManagerName,
+        paymentAmount: new BN(paymentAmount),
+        mintId: rentalMint.publicKey,
+        paymentMintId: paymentMint.publicKey,
+        payerTokenAccountId: payerTokenAccountId,
+        feeCollectorTokenAccountId: feeCollectorTokenAccount,
+        paymentTokenAccountId: paymentTokenAccountId,
+        excludeCretors: [],
+      }
     );
 
     const txEnvelope = new TransactionEnvelope(
