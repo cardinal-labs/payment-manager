@@ -2,15 +2,13 @@ import {
   createMint,
   executeTransaction,
   findAta,
+  findMintEditionId,
+  findMintMetadataId,
   withFindOrInitAssociatedTokenAccount,
 } from "@cardinal/common";
 import {
-  CreateMasterEditionV3,
-  CreateMetadataV2,
-  Creator,
-  DataV2,
-  MasterEdition,
-  Metadata,
+  createCreateMasterEditionV3Instruction,
+  createCreateMetadataAccountV2Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { BN, Wallet, web3 } from "@project-serum/anchor";
 import { getAccount } from "@solana/spl-token";
@@ -75,63 +73,68 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       }
     );
 
-    // specify creators shares
-    const metadataId = await Metadata.getPDA(mintId);
-    const metadataTx = new CreateMetadataV2(
-      { feePayer: tokenCreator.publicKey },
-      {
-        metadata: metadataId,
-        metadataData: new DataV2({
-          name: "test",
-          symbol: "TST",
-          uri: "http://test/",
-          sellerFeeBasisPoints: sellerFeeBasisPoints,
-          creators: [
-            new Creator({
-              address: tokenCreator.publicKey.toString(),
-              verified: true,
-              share: 0,
-            }),
-            new Creator({
-              address: creator1.publicKey.toString(),
-              verified: false,
-              share: creator1Share.toNumber(),
-            }),
-            new Creator({
-              address: creator2.publicKey.toString(),
-              verified: false,
-              share: creator2Share.toNumber(),
-            }),
-            new Creator({
-              address: creator3.publicKey.toString(),
-              verified: false,
-              share: creator3Share.toNumber(),
-            }),
-          ],
-          collection: null,
-          uses: null,
-        }),
-        updateAuthority: tokenCreator.publicKey,
-        mint: mintId,
-        mintAuthority: tokenCreator.publicKey,
-      }
-    );
-
-    const masterEditionId = await MasterEdition.getPDA(mintId);
-    const masterEditionTx = new CreateMasterEditionV3(
-      { feePayer: tokenCreator.publicKey },
-      {
-        edition: masterEditionId,
-        metadata: metadataId,
-        updateAuthority: tokenCreator.publicKey,
-        mint: mintId,
-        mintAuthority: tokenCreator.publicKey,
-        maxSupply: new BN(1),
-      }
-    );
+    const metadataId = findMintMetadataId(mintId);
+    const masterEditionId = findMintEditionId(mintId);
     const transaction = new Transaction().add(
-      ...metadataTx.instructions,
-      ...masterEditionTx.instructions
+      createCreateMetadataAccountV2Instruction(
+        {
+          metadata: metadataId,
+          mint: mintId,
+          mintAuthority: tokenCreator.publicKey,
+          payer: tokenCreator.publicKey,
+          updateAuthority: tokenCreator.publicKey,
+        },
+        {
+          createMetadataAccountArgsV2: {
+            isMutable: true,
+            data: {
+              name: "test",
+              symbol: "TST",
+              uri: "http://test/",
+              sellerFeeBasisPoints: sellerFeeBasisPoints,
+              creators: [
+                {
+                  address: tokenCreator.publicKey,
+                  verified: true,
+                  share: 0,
+                },
+                {
+                  address: creator1.publicKey,
+                  verified: false,
+                  share: creator1Share.toNumber(),
+                },
+                {
+                  address: creator2.publicKey,
+                  verified: false,
+                  share: creator2Share.toNumber(),
+                },
+                {
+                  address: creator3.publicKey,
+                  verified: false,
+                  share: creator3Share.toNumber(),
+                },
+              ],
+              collection: null,
+              uses: null,
+            },
+          },
+        }
+      ),
+      createCreateMasterEditionV3Instruction(
+        {
+          edition: masterEditionId,
+          mint: mintId,
+          updateAuthority: tokenCreator.publicKey,
+          mintAuthority: tokenCreator.publicKey,
+          metadata: metadataId,
+          payer: tokenCreator.publicKey,
+        },
+        {
+          createMasterEditionArgs: {
+            maxSupply: new BN(0),
+          },
+        }
+      )
     );
     await executeTransaction(
       provider.connection,
