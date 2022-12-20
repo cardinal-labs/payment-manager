@@ -1,8 +1,8 @@
 import { findMintMetadataId, tryGetAccount } from "@cardinal/common";
 import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import type { Connection, PublicKey } from "@solana/web3.js";
-import { SystemProgram, Transaction } from "@solana/web3.js";
+import type { Connection } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import type BN from "bn.js";
 
 import { getPaymentManager } from "./accounts";
@@ -130,10 +130,8 @@ export const withHandleNativePaymentWithRoyalties = async (
     paymentManagerName: string;
     paymentAmount: BN;
     mintId: PublicKey;
-    mintMetadataId: PublicKey;
-    paymentMintId: PublicKey;
-    feeCollector: PublicKey;
-    paymentTarget: PublicKey;
+    feeCollectorId: PublicKey;
+    paymentTargetId: PublicKey;
     buySideTokenAccountId?: PublicKey;
     excludeCretors?: string[];
   }
@@ -146,7 +144,7 @@ export const withHandleNativePaymentWithRoyalties = async (
       connection,
       wallet,
       params.mintId,
-      params.paymentMintId,
+      PublicKey.default,
       params.buySideTokenAccountId,
       params.excludeCretors ?? []
     );
@@ -156,8 +154,8 @@ export const withHandleNativePaymentWithRoyalties = async (
       .methods.handleNativePaymentWithRoyalties(params.paymentAmount)
       .accounts({
         paymentManager: paymentManagerId,
-        feeCollector: params.feeCollector,
-        paymentTarget: params.paymentTarget,
+        feeCollector: params.feeCollectorId,
+        paymentTarget: params.paymentTargetId,
         payer: wallet.publicKey,
         mint: params.mintId,
         mintMetadata: findMintMetadataId(params.mintId),

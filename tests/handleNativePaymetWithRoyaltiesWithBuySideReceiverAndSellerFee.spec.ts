@@ -14,7 +14,7 @@ import {
   TransactionEnvelope,
 } from "@saberhq/solana-contrib";
 import type { Token } from "@solana/spl-token";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { expect } from "chai";
 
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
@@ -175,17 +175,14 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     const provider = getProvider();
     const transaction = new web3.Transaction();
 
-    await withInit(
-      transaction,
-      provider.connection,
-      provider.wallet,
+    await withInit(transaction, provider.connection, provider.wallet, {
       paymentManagerName,
-      feeCollector.publicKey,
-      MAKER_FEE.toNumber(),
-      TAKER_FEE.toNumber(),
+      feeCollectorId: feeCollector.publicKey,
+      makerFeeBasisPoints: MAKER_FEE.toNumber(),
+      takerFeeBasisPoints: TAKER_FEE.toNumber(),
       includeSellerFeeBasisPoints,
-      ROYALTEE_FEE_SHARE
-    );
+      royaltyFeeShare: ROYALTEE_FEE_SHARE,
+    });
 
     const txEnvelope = new TransactionEnvelope(
       SolanaProvider.init({
@@ -200,9 +197,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       formatLogs: true,
     }).to.be.fulfilled;
 
-    const [checkPaymentManagerId] = await findPaymentManagerAddress(
-      paymentManagerName
-    );
+    const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
       checkPaymentManagerId
@@ -251,15 +246,15 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       transaction,
       provider.connection,
       new SignerWallet(payer),
-      paymentManagerName,
-      new BN(paymentAmount),
-      rentalMint.publicKey,
-      metadataId,
-      PublicKey.default,
-      feeCollector.publicKey,
-      paymentReceiver.publicKey,
-      buySideReceiver.publicKey,
-      []
+      {
+        paymentManagerName,
+        paymentAmount: new BN(paymentAmount),
+        mintId: rentalMint.publicKey,
+        feeCollectorId: feeCollector.publicKey,
+        paymentTargetId: paymentReceiver.publicKey,
+        buySideTokenAccountId: buySideReceiver.publicKey,
+        excludeCretors: [],
+      }
     );
 
     const txEnvelope = new TransactionEnvelope(
