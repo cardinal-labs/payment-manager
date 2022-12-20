@@ -14,11 +14,6 @@ import * as web3 from "@solana/web3.js";
 
 import { getPaymentManager } from "./accounts";
 
-export type AccountData<T> = {
-  pubkey: web3.PublicKey;
-  parsed: T;
-};
-
 export const withRemainingAccountsForPayment = async (
   transaction: web3.Transaction,
   connection: Connection,
