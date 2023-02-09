@@ -38,8 +38,8 @@
     "*.{js,json,jsx,html,css,md}": "prettier --write"
   },
   "dependencies": {
-    "@cardinal/common": "^5.0.2",
-    "@metaplex-foundation/mpl-token-metadata": "^2.5.2",
+    "@cardinal/common": "^7.0.0",
+    "@metaplex-foundation/mpl-token-metadata": "^2.8.3",
     "@project-serum/anchor": "^0.26.0",
     "@solana/spl-token": "^0.3.6",
     "@solana/web3.js": "^1.66.2"
