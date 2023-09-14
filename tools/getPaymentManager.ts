@@ -1,4 +1,4 @@
-import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
+import type { Wallet } from "@coral-xyz/anchor/dist/cjs/provider";
 import type { Connection } from "@solana/web3.js";
 
 import { getPaymentManager } from "../sdk/accounts";
@@ -8,7 +8,7 @@ export const commandName = "getPaymentManager";
 export const description = "Get a payment manager";
 
 export const getArgs = (_connection: Connection, _wallet: Wallet) => ({
-  paymentManagerName: "cardinal-stake-pool",
+  paymentManagerName: "pm-name",
 });
 
 export const handler = async (

@@ -1,8 +1,8 @@
-import { findMintMetadataId, tryGetAccount } from "@cardinal/common";
-import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
+import type { Wallet } from "@coral-xyz/anchor/dist/cjs/provider";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import type { Connection } from "@solana/web3.js";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { findMintMetadataId, tryGetAccount } from "@solana-nft-programs/common";
 import type BN from "bn.js";
 
 import { getPaymentManager } from "./accounts";

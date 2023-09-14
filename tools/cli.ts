@@ -1,6 +1,6 @@
-import { connectionFor } from "@cardinal/common";
-import { Wallet } from "@project-serum/anchor";
+import { Wallet } from "@coral-xyz/anchor";
 import type { Cluster, Connection } from "@solana/web3.js";
+import { connectionFor } from "@solana-nft-programs/common";
 import * as dotenv from "dotenv";
 import * as readline from "readline";
 import type { ArgumentsCamelCase, CommandModule } from "yargs";

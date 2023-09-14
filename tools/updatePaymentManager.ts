@@ -1,7 +1,7 @@
-import { executeTransaction } from "@cardinal/common";
-import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
+import type { Wallet } from "@coral-xyz/anchor/dist/cjs/provider";
 import type { Connection } from "@solana/web3.js";
 import { PublicKey, Transaction } from "@solana/web3.js";
+import { executeTransaction } from "@solana-nft-programs/common";
 import { BN } from "bn.js";
 
 import { withUpdate } from "../sdk/transaction";

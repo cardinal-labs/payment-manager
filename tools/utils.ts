@@ -1,4 +1,4 @@
-import { utils } from "@project-serum/anchor";
+import { utils } from "@coral-xyz/anchor";
 import { Keypair } from "@solana/web3.js";
 
 export const keypairFrom = (s: string, n?: string): Keypair => {

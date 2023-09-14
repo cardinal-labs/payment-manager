@@ -1,7 +1,7 @@
-import { Wallet } from "@project-serum/anchor";
+import { Wallet } from "@coral-xyz/anchor";
 import { Connection, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-export type CardinalProvider = {
+export type SolanaProvider = {
   connection: Connection;
   wallet: Wallet;
 };
@@ -25,7 +25,7 @@ export async function newAccountWithLamports(
   return account;
 }
 
-export async function getProvider(): Promise<CardinalProvider> {
+export async function getProvider(): Promise<SolanaProvider> {
   const connection = getConnection();
   const keypair = await newAccountWithLamports(connection);
   const wallet = new Wallet(keypair);

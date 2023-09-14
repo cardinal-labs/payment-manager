@@ -9,13 +9,13 @@ cluster = "localnet"
 wallet = "./tests/test-key.json"
 
 [programs.mainnet]
-cardinal_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
+solana_nft_programs_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
 
 [programs.devnet]
-cardinal_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
+solana_nft_programs_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
 
 [programs.testnet]
-cardinal_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
+solana_nft_programs_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
 
 [programs.localnet]
-cardinal_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'
+solana_nft_programs_payment_manager = 'pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn'

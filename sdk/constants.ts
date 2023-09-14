@@ -1,11 +1,11 @@
-import type { ParsedIdlAccountData } from "@cardinal/common";
-import { emptyWallet } from "@cardinal/common";
-import { AnchorProvider, Program } from "@project-serum/anchor";
-import type { Wallet } from "@project-serum/anchor/dist/cjs/provider";
+import { AnchorProvider, Program } from "@coral-xyz/anchor";
+import type { Wallet } from "@coral-xyz/anchor/dist/cjs/provider";
 import type { ConfirmOptions, Connection } from "@solana/web3.js";
 import { PublicKey } from "@solana/web3.js";
+import type { ParsedIdlAccountData } from "@solana-nft-programs/common";
+import { emptyWallet } from "@solana-nft-programs/common";
 
-import * as PAYMENT_MANAGER_TYPES from "./idl/cardinal_payment_manager";
+import * as PAYMENT_MANAGER_TYPES from "./idl/solana_nft_programs_payment_manager";
 
 export const BASIS_POINTS_DIVISOR = 10000;
 export const DEFAULT_BUY_SIDE_FEE_SHARE = 50;
@@ -19,12 +19,12 @@ export const CRANK_KEY = new PublicKey(
 );
 
 export const PAYMENT_MANAGER_SEED = "payment-manager";
-export const DEFAULT_PAYMENT_MANAGER_NAME = "cardinal";
+export const DEFAULT_PAYMENT_MANAGER_NAME = "foobar";
 
 export const PAYMENT_MANAGER_IDL = PAYMENT_MANAGER_TYPES.IDL;
 
 export type PAYMENT_MANAGER_PROGRAM =
-  PAYMENT_MANAGER_TYPES.CardinalPaymentManager;
+  PAYMENT_MANAGER_TYPES.SolanaNftProgramsPaymentManager;
 
 export type PaymentManagerData = ParsedIdlAccountData<
   "paymentManager",

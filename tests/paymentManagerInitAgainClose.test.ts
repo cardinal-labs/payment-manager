@@ -1,12 +1,12 @@
-import { executeTransaction, tryGetAccount } from "@cardinal/common";
-import { web3 } from "@project-serum/anchor";
+import { web3 } from "@coral-xyz/anchor";
 import { Keypair, Transaction } from "@solana/web3.js";
+import { executeTransaction, tryGetAccount } from "@solana-nft-programs/common";
 import { BN } from "bn.js";
 
 import { getPaymentManager } from "../sdk/accounts";
 import { findPaymentManagerAddress } from "../sdk/pda";
 import { withClose, withInit } from "../sdk/transaction";
-import type { CardinalProvider } from "./workspace";
+import type { SolanaProvider } from "./workspace";
 import { getProvider } from "./workspace";
 
 describe("Init again and close payment manager", () => {
@@ -14,7 +14,7 @@ describe("Init again and close payment manager", () => {
   const TAKER_FEE = 300;
   const paymentManagerName = Math.random().toString(36).slice(2, 7);
   const feeCollector = Keypair.generate();
-  let provider: CardinalProvider;
+  let provider: SolanaProvider;
 
   beforeAll(async () => {
     provider = await getProvider();

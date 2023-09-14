@@ -1,16 +1,16 @@
+import { BN, Wallet, web3 } from "@coral-xyz/anchor";
+import {
+  createCreateMasterEditionV3Instruction,
+  createCreateMetadataAccountV2Instruction,
+} from "@metaplex-foundation/mpl-token-metadata";
+import type { PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
 import {
   createMint,
   executeTransaction,
   findMintEditionId,
   findMintMetadataId,
-} from "@cardinal/common";
-import {
-  createCreateMasterEditionV3Instruction,
-  createCreateMetadataAccountV2Instruction,
-} from "@metaplex-foundation/mpl-token-metadata";
-import { BN, Wallet, web3 } from "@project-serum/anchor";
-import type { PublicKey } from "@solana/web3.js";
-import { Keypair, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
+} from "@solana-nft-programs/common";
 
 import { DEFAULT_BUY_SIDE_FEE_SHARE } from "../sdk";
 import { getPaymentManager } from "../sdk/accounts";
@@ -19,7 +19,7 @@ import {
   withHandleNativePaymentWithRoyalties,
   withInit,
 } from "../sdk/transaction";
-import type { CardinalProvider } from "./workspace";
+import type { SolanaProvider } from "./workspace";
 import { getProvider } from "./workspace";
 
 describe("Handle payment with royalties with buy side receiver and seller fee", () => {
@@ -44,7 +44,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
   const payer = Keypair.generate();
   const buySideReceiver = Keypair.generate();
   let mintId: PublicKey;
-  let provider: CardinalProvider;
+  let provider: SolanaProvider;
 
   beforeAll(async () => {
     provider = await getProvider();

@@ -7,7 +7,7 @@ use {anchor_lang::prelude::*, instructions::*};
 declare_id!("pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn");
 
 #[program]
-pub mod cardinal_payment_manager {
+pub mod solana_nft_programs_payment_manager {
     use super::*;
 
     pub fn init(ctx: Context<InitCtx>, ix: InitIx) -> Result<()> {
