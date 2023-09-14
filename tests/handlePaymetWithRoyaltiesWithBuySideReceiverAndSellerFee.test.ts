@@ -52,7 +52,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
-      LAMPORTS_PER_SOL
+      LAMPORTS_PER_SOL,
     );
     await provider.connection.confirmTransaction(airdropCreator);
 
@@ -62,7 +62,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       {
         target: provider.wallet.publicKey,
         amount: RECIPIENT_START_PAYMENT_AMOUNT.toNumber(),
-      }
+      },
     );
 
     [, mintId] = await createMint(
@@ -70,7 +70,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       new Wallet(tokenCreator),
       {
         target: provider.wallet.publicKey,
-      }
+      },
     );
 
     const metadataId = findMintMetadataId(mintId);
@@ -118,7 +118,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
               uses: null,
             },
           },
-        }
+        },
       ),
       createCreateMasterEditionV3Instruction(
         {
@@ -133,13 +133,13 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
           createMasterEditionArgs: {
             maxSupply: new BN(0),
           },
-        }
-      )
+        },
+      ),
     );
     await executeTransaction(
       provider.connection,
       transaction,
-      new Wallet(tokenCreator)
+      new Wallet(tokenCreator),
     );
   });
 
@@ -160,18 +160,18 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
-      checkPaymentManagerId
+      checkPaymentManagerId,
     );
     expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
     expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(
-      MAKER_FEE.toNumber()
+      MAKER_FEE.toNumber(),
     );
     expect(paymentManagerData.parsed.takerFeeBasisPoints).toEqual(
-      TAKER_FEE.toNumber()
+      TAKER_FEE.toNumber(),
     );
     expect(paymentManagerData.parsed.includeSellerFeeBasisPoints).toBeTruthy();
     expect(paymentManagerData.parsed.royaltyFeeShare?.toNumber()).toEqual(
-      ROYALTEE_FEE_SHARE.toNumber()
+      ROYALTEE_FEE_SHARE.toNumber(),
     );
   });
 
@@ -186,7 +186,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
         paymentMintId,
         buySideReceiver.publicKey,
         provider.wallet.publicKey,
-        true
+        true,
       );
 
     const [paymentTokenAccountId, feeCollectorTokenAccount, _accounts] =
@@ -197,7 +197,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
         mintId,
         paymentMintId,
         paymentReceiver.publicKey,
-        paymentManagerId
+        paymentManagerId,
       );
 
     const payerTokenAccountId = await withFindOrInitAssociatedTokenAccount(
@@ -206,7 +206,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       paymentMintId,
       provider.wallet.publicKey,
       provider.wallet.publicKey,
-      true
+      true,
     );
 
     const creator1Ata = await findAta(paymentMintId, creator1.publicKey, true);
@@ -214,21 +214,21 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     const creator3Ata = await findAta(paymentMintId, creator3.publicKey, true);
 
     await expect(
-      getAccount(provider.connection, creator1Ata)
+      getAccount(provider.connection, creator1Ata),
     ).rejects.toThrow();
     await expect(
-      getAccount(provider.connection, creator2Ata)
+      getAccount(provider.connection, creator2Ata),
     ).rejects.toThrow();
     await expect(
-      getAccount(provider.connection, creator3Ata)
+      getAccount(provider.connection, creator3Ata),
     ).rejects.toThrow();
 
     let beforePaymentTokenAccountAmount = new BN(0);
     try {
       beforePaymentTokenAccountAmount = new BN(
         Number(
-          (await getAccount(provider.connection, paymentTokenAccountId)).amount
-        )
+          (await getAccount(provider.connection, paymentTokenAccountId)).amount,
+        ),
       );
     } catch (e) {
       // pass
@@ -237,8 +237,8 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     try {
       beforePayerTokenAccountAmount = new BN(
         Number(
-          (await getAccount(provider.connection, payerTokenAccountId)).amount
-        )
+          (await getAccount(provider.connection, payerTokenAccountId)).amount,
+        ),
       );
     } catch (e) {
       // pass
@@ -258,7 +258,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
         paymentTokenAccountId: paymentTokenAccountId,
         buySideTokenAccountId: buySideReceiverTokenAccountId,
         excludeCretors: [],
-      }
+      },
     );
 
     await executeTransaction(provider.connection, transaction, provider.wallet);
@@ -287,7 +287,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
               totalCreatorsFee.mul(creator3Share),
             ]
               .reduce((partialSum, a) => partialSum.add(a), new BN(0))
-              .div(new BN(100))
+              .div(new BN(100)),
           )
           .toNumber()
       : 0;
@@ -324,36 +324,38 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .div(BASIS_POINTS_DIVISOR);
     const buySideReceiverAtaInfo = await getAccount(
       provider.connection,
-      buySideReceiverTokenAccountId
+      buySideReceiverTokenAccountId,
     );
     expect(Number(buySideReceiverAtaInfo.amount)).toEqual(
-      buySideFee.toNumber()
+      buySideFee.toNumber(),
     );
     const feeCollectorAtaInfo = await getAccount(
       provider.connection,
-      feeCollectorTokenAccount
+      feeCollectorTokenAccount,
     );
     expect(Number(feeCollectorAtaInfo.amount)).toEqual(
-      totalFees.sub(feesPaidOut).toNumber()
+      totalFees.sub(feesPaidOut).toNumber(),
     );
 
     const paymentAtaInfo = await getAccount(
       provider.connection,
-      paymentTokenAccountId
+      paymentTokenAccountId,
     );
     expect(Number(paymentAtaInfo.amount)).toEqual(
       beforePaymentTokenAccountAmount
         .add(paymentAmount.add(takerFee).sub(totalFees).sub(buySideFee))
-        .toNumber()
+        .toNumber(),
     );
 
     const afterPayerTokenAccountAmount = new BN(
       Number(
-        (await getAccount(provider.connection, payerTokenAccountId)).amount
-      )
+        (await getAccount(provider.connection, payerTokenAccountId)).amount,
+      ),
     );
     expect(
-      beforePayerTokenAccountAmount.sub(afterPayerTokenAccountAmount).toNumber()
+      beforePayerTokenAccountAmount
+        .sub(afterPayerTokenAccountAmount)
+        .toNumber(),
     ).toEqual(paymentAmount.add(takerFee).toNumber());
   });
 });

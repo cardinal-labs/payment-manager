@@ -23,7 +23,7 @@ export const withInit = async (
     royaltyFeeShare?: BN;
     payer?: PublicKey;
     authority?: PublicKey;
-  }
+  },
 ): Promise<[Transaction, PublicKey]> => {
   const paymentManagerId = findPaymentManagerAddress(params.paymentManagerName);
   transaction.add(
@@ -42,7 +42,7 @@ export const withInit = async (
         payer: params.payer ?? wallet.publicKey,
         systemProgram: SystemProgram.programId,
       })
-      .instruction()
+      .instruction(),
   );
   return [transaction, paymentManagerId];
 };
@@ -57,7 +57,7 @@ export const withManagePayment = async (
     payerTokenAccountId: PublicKey;
     feeCollectorTokenAccountId: PublicKey;
     paymentTokenAccountId: PublicKey;
-  }
+  },
 ): Promise<Transaction> => {
   return transaction.add(
     await paymentManagerProgram(connection, wallet)
@@ -70,7 +70,7 @@ export const withManagePayment = async (
         payer: wallet.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
-      .instruction()
+      .instruction(),
   );
 };
 
@@ -88,7 +88,7 @@ export const withHandlePaymentWithRoyalties = async (
     paymentTokenAccountId: PublicKey;
     buySideTokenAccountId?: PublicKey;
     excludeCretors?: string[];
-  }
+  },
 ): Promise<Transaction> => {
   const paymentManagerId = findPaymentManagerAddress(params.paymentManagerName);
 
@@ -100,7 +100,7 @@ export const withHandlePaymentWithRoyalties = async (
       params.mintId,
       params.paymentMintId,
       params.buySideTokenAccountId,
-      params.excludeCretors ?? []
+      params.excludeCretors ?? [],
     );
   transaction.add(
     await paymentManagerProgram(connection, wallet)
@@ -117,7 +117,7 @@ export const withHandlePaymentWithRoyalties = async (
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .remainingAccounts(remainingAccounts)
-      .instruction()
+      .instruction(),
   );
   return transaction;
 };
@@ -134,7 +134,7 @@ export const withHandleNativePaymentWithRoyalties = async (
     paymentTargetId: PublicKey;
     buySideTokenAccountId?: PublicKey;
     excludeCretors?: string[];
-  }
+  },
 ): Promise<Transaction> => {
   const paymentManagerId = findPaymentManagerAddress(params.paymentManagerName);
 
@@ -146,7 +146,7 @@ export const withHandleNativePaymentWithRoyalties = async (
       params.mintId,
       PublicKey.default,
       params.buySideTokenAccountId,
-      params.excludeCretors ?? []
+      params.excludeCretors ?? [],
     );
 
   transaction.add(
@@ -162,7 +162,7 @@ export const withHandleNativePaymentWithRoyalties = async (
         systemProgram: SystemProgram.programId,
       })
       .remainingAccounts(remainingAccounts)
-      .instruction()
+      .instruction(),
   );
   return transaction;
 };
@@ -174,7 +174,7 @@ export const withClose = async (
   params: {
     paymentManagerName: string;
     collectorId?: PublicKey;
-  }
+  },
 ): Promise<Transaction> => {
   transaction.add(
     await paymentManagerProgram(connection, wallet)
@@ -184,7 +184,7 @@ export const withClose = async (
         collector: params.collectorId ?? wallet.publicKey,
         closer: wallet.publicKey,
       })
-      .instruction()
+      .instruction(),
   );
   return transaction;
 };
@@ -200,11 +200,11 @@ export const withUpdate = async (
     makerFeeBasisPoints?: number;
     takerFeeBasisPoints?: number;
     royaltyFeeShare?: BN;
-  }
+  },
 ): Promise<Transaction> => {
   const paymentManagerId = findPaymentManagerAddress(params.paymentManagerName);
   const checkPaymentManager = await tryGetAccount(() =>
-    getPaymentManager(connection, paymentManagerId)
+    getPaymentManager(connection, paymentManagerId),
   );
   if (!checkPaymentManager) {
     throw `No payment manager found with name ${params.paymentManagerName}`;
@@ -232,7 +232,7 @@ export const withUpdate = async (
         payer: wallet.publicKey,
         systemProgram: SystemProgram.programId,
       })
-      .instruction()
+      .instruction(),
   );
   return transaction;
 };

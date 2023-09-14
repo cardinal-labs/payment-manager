@@ -36,7 +36,7 @@ describe("Init again and close payment manager", () => {
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
-      checkPaymentManagerId
+      checkPaymentManagerId,
     );
     expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
     expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(MAKER_FEE);
@@ -56,13 +56,13 @@ describe("Init again and close payment manager", () => {
     await expect(
       executeTransaction(provider.connection, transaction, provider.wallet, {
         silent: true,
-      })
+      }),
     ).rejects.toThrow();
   });
 
   it("Close", async () => {
     const balanceBefore = await provider.connection.getBalance(
-      provider.wallet.publicKey
+      provider.wallet.publicKey,
     );
     const transaction = new Transaction();
     await withClose(transaction, provider.connection, provider.wallet, {
@@ -72,12 +72,12 @@ describe("Init again and close payment manager", () => {
 
     const paymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await tryGetAccount(() =>
-      getPaymentManager(provider.connection, paymentManagerId)
+      getPaymentManager(provider.connection, paymentManagerId),
     );
     expect(paymentManagerData).toEqual(null);
 
     const balanceAfter = await provider.connection.getBalance(
-      provider.wallet.publicKey
+      provider.wallet.publicKey,
     );
 
     expect(balanceAfter).toBeGreaterThan(balanceBefore);

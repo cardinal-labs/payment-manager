@@ -24,7 +24,7 @@ export const withRemainingAccountsForPayment = async (
   options?: {
     payer?: PublicKey;
     receiptMint?: PublicKey | null;
-  }
+  },
 ): Promise<[PublicKey, PublicKey, AccountMeta[]]> => {
   const payer = options?.payer ?? wallet.publicKey;
   const royaltiesRemainingAccounts =
@@ -35,7 +35,7 @@ export const withRemainingAccountsForPayment = async (
       mint,
       paymentMint,
       buySideTokenAccountId,
-      [issuerId.toString()]
+      [issuerId.toString()],
     );
   const mintMetadataId = findMintMetadataId(mint);
   const paymentRemainingAccounts = [
@@ -58,19 +58,19 @@ export const withRemainingAccountsForPayment = async (
 
   if (options?.receiptMint) {
     const receiptMintLargestAccount = await connection.getTokenLargestAccounts(
-      options.receiptMint
+      options.receiptMint,
     );
     // get holder of receipt mint
     const receiptTokenAccountId = receiptMintLargestAccount.value[0]?.address;
     if (!receiptTokenAccountId) throw new Error("No token accounts found");
     const receiptTokenAccount = await getAccount(
       connection,
-      receiptTokenAccountId
+      receiptTokenAccountId,
     );
 
     // get ATA for this mint of receipt mint holder
     const returnTokenAccountId = receiptTokenAccount.owner.equals(
-      wallet.publicKey
+      wallet.publicKey,
     )
       ? await findAta(paymentMint, receiptTokenAccount.owner, true)
       : await withFindOrInitAssociatedTokenAccount(
@@ -79,11 +79,11 @@ export const withRemainingAccountsForPayment = async (
           paymentMint,
           receiptTokenAccount.owner,
           payer,
-          true
+          true,
         );
 
     const paymentManager = await tryNull(
-      getPaymentManager(connection, paymentManagerId)
+      getPaymentManager(connection, paymentManagerId),
     );
     const feeCollectorTokenAccountId =
       await withFindOrInitAssociatedTokenAccount(
@@ -92,7 +92,7 @@ export const withRemainingAccountsForPayment = async (
         paymentMint,
         paymentManager ? paymentManager.parsed.feeCollector : paymentManagerId,
         payer,
-        true
+        true,
       );
     return [
       returnTokenAccountId,
@@ -116,10 +116,10 @@ export const withRemainingAccountsForPayment = async (
           paymentMint,
           issuerId,
           payer,
-          true
+          true,
         );
     const paymentManager = await tryNull(
-      getPaymentManager(connection, paymentManagerId)
+      getPaymentManager(connection, paymentManagerId),
     );
     const feeCollectorTokenAccountId =
       await withFindOrInitAssociatedTokenAccount(
@@ -128,7 +128,7 @@ export const withRemainingAccountsForPayment = async (
         paymentMint,
         paymentManager ? paymentManager.parsed.feeCollector : paymentManagerId,
         payer,
-        true
+        true,
       );
     return [
       issuerTokenAccountId,
@@ -145,7 +145,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
   mint: PublicKey,
   paymentMint: PublicKey,
   buySideTokenAccountId?: PublicKey,
-  excludeCreators?: string[]
+  excludeCreators?: string[],
 ): Promise<AccountMeta[]> => {
   const remainingAccounts: AccountMeta[] = [];
   let metaplexMintData: Metadata | undefined;
@@ -153,7 +153,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
     const mintMetadataId = findMintMetadataId(mint);
     metaplexMintData = await Metadata.fromAccountAddress(
       connection,
-      mintMetadataId
+      mintMetadataId,
     );
   } catch (e) {
     // pass
@@ -170,7 +170,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
           });
         } else {
           const creatorMintTokenAccount = excludeCreators?.includes(
-            creator.address.toString()
+            creator.address.toString(),
           )
             ? await findAta(paymentMint, creatorAddress, true)
             : await withFindOrInitAssociatedTokenAccount(
@@ -179,7 +179,7 @@ export const withRemainingAccountsForHandlePaymentWithRoyalties = async (
                 paymentMint,
                 creatorAddress,
                 wallet.publicKey,
-                true
+                true,
               );
           remainingAccounts.push({
             pubkey: creatorMintTokenAccount,

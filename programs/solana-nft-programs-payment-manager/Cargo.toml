@@ -1,6 +1,6 @@
 [package]
 name = "solana-nft-programs-payment-manager"
-version = "4.0.0"
+version = "1.0.0"
 description = "Payment manager"
 edition = "2021"
 repository = "https://github.com/solana-nft-programs/payment-manager/"

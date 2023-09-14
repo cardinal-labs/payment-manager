@@ -14,12 +14,12 @@ export const getArgs = (_connection: Connection, _wallet: Wallet) => ({
 export const handler = async (
   connection: Connection,
   _wallet: Wallet,
-  args: ReturnType<typeof getArgs>
+  args: ReturnType<typeof getArgs>,
 ) => {
   const paymentManagerId = findPaymentManagerAddress(args.paymentManagerName);
   const paymentManagerData = await getPaymentManager(
     connection,
-    paymentManagerId
+    paymentManagerId,
   );
   console.log(
     `[success] Found payment manager ${
@@ -28,7 +28,7 @@ export const handler = async (
     JSON.stringify(
       { pubkey: paymentManagerData.pubkey, parsed: paymentManagerData.parsed },
       null,
-      2
-    )
+      2,
+    ),
   );
 };

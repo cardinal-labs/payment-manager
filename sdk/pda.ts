@@ -13,6 +13,6 @@ export const findPaymentManagerAddress = (name: string): PublicKey => {
       utils.bytes.utf8.encode(PAYMENT_MANAGER_SEED),
       utils.bytes.utf8.encode(name),
     ],
-    PAYMENT_MANAGER_ADDRESS
+    PAYMENT_MANAGER_ADDRESS,
   )[0];
 };

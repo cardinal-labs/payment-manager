@@ -14,12 +14,12 @@ export function getConnection(): Connection {
 export async function newAccountWithLamports(
   connection: Connection,
   lamports = LAMPORTS_PER_SOL * 10,
-  keypair = Keypair.generate()
+  keypair = Keypair.generate(),
 ): Promise<Keypair> {
   const account = keypair;
   const signature = await connection.requestAirdrop(
     account.publicKey,
-    lamports
+    lamports,
   );
   await connection.confirmTransaction(signature, "confirmed");
   return account;
