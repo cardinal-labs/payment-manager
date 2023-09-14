@@ -11,11 +11,11 @@ export const BASIS_POINTS_DIVISOR = 10000;
 export const DEFAULT_BUY_SIDE_FEE_SHARE = 50;
 
 export const PAYMENT_MANAGER_ADDRESS = new PublicKey(
-  "pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn",
+  "pmvYY6Wgvpe3DEj3UX1FcRpMx43sMLYLJrFTVGcqpdn"
 );
 
 export const CRANK_KEY = new PublicKey(
-  "crkdpVWjHWdggGgBuSyAqSmZUmAjYLzD435tcLDRLXr",
+  "crkdpVWjHWdggGgBuSyAqSmZUmAjYLzD435tcLDRLXr"
 );
 
 export const PAYMENT_MANAGER_SEED = "payment-manager";
@@ -34,7 +34,7 @@ export type PaymentManagerData = ParsedIdlAccountData<
 export const paymentManagerProgram = (
   connection: Connection,
   wallet?: Wallet,
-  confirmOptions?: ConfirmOptions,
+  confirmOptions?: ConfirmOptions
 ) => {
   return new Program<PAYMENT_MANAGER_PROGRAM>(
     PAYMENT_MANAGER_IDL,
@@ -42,7 +42,7 @@ export const paymentManagerProgram = (
     new AnchorProvider(
       connection,
       wallet ?? emptyWallet(PublicKey.default),
-      confirmOptions ?? {},
-    ),
+      confirmOptions ?? {}
+    )
   );
 };

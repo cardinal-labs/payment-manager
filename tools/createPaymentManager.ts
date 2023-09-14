@@ -22,7 +22,7 @@ export const getArgs = (_connection: Connection, _wallet: Wallet) => ({
 export const handler = async (
   connection: Connection,
   wallet: Wallet,
-  args: ReturnType<typeof getArgs>,
+  args: ReturnType<typeof getArgs>
 ) => {
   const transaction = new Transaction();
   await withInit(transaction, connection, wallet, args);

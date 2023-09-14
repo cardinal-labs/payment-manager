@@ -50,42 +50,42 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(airdropCreator);
     const paymentReceiverInfo = await provider.connection.requestAirdrop(
       paymentReceiver.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(paymentReceiverInfo);
     const buySideReceiverInfo = await provider.connection.requestAirdrop(
       buySideReceiver.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(buySideReceiverInfo);
     const feeCollectorInfo = await provider.connection.requestAirdrop(
       feeCollector.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(feeCollectorInfo);
     const payerInfo = await provider.connection.requestAirdrop(
       payer.publicKey,
-      2 * LAMPORTS_PER_SOL,
+      2 * LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(payerInfo);
     const creator1Info = await provider.connection.requestAirdrop(
       creator1.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(creator1Info);
     const creator2Info = await provider.connection.requestAirdrop(
       creator2.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(creator2Info);
     const creator3Info = await provider.connection.requestAirdrop(
       creator3.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(creator3Info);
 
@@ -94,7 +94,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       new Wallet(tokenCreator),
       {
         target: provider.wallet.publicKey,
-      },
+      }
     );
 
     const metadataId = findMintMetadataId(mintId);
@@ -142,7 +142,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
               uses: null,
             },
           },
-        },
+        }
       ),
       createCreateMasterEditionV3Instruction(
         {
@@ -157,13 +157,13 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
           createMasterEditionArgs: {
             maxSupply: new BN(0),
           },
-        },
-      ),
+        }
+      )
     );
     await executeTransaction(
       provider.connection,
       transaction,
-      new Wallet(tokenCreator),
+      new Wallet(tokenCreator)
     );
   });
 
@@ -184,18 +184,18 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
-      checkPaymentManagerId,
+      checkPaymentManagerId
     );
     expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
     expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(
-      MAKER_FEE.toNumber(),
+      MAKER_FEE.toNumber()
     );
     expect(paymentManagerData.parsed.takerFeeBasisPoints).toEqual(
-      TAKER_FEE.toNumber(),
+      TAKER_FEE.toNumber()
     );
     expect(paymentManagerData.parsed.includeSellerFeeBasisPoints).toBeTruthy();
     expect(paymentManagerData.parsed.royaltyFeeShare?.toNumber()).toEqual(
-      ROYALTEE_FEE_SHARE.toNumber(),
+      ROYALTEE_FEE_SHARE.toNumber()
     );
   });
 
@@ -236,12 +236,12 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
         paymentTargetId: paymentReceiver.publicKey,
         buySideTokenAccountId: buySideReceiver.publicKey,
         excludeCretors: [],
-      },
+      }
     );
     await executeTransaction(
       provider.connection,
       transaction,
-      new Wallet(payer),
+      new Wallet(payer)
     );
 
     const makerFee = paymentAmount.mul(MAKER_FEE).div(BASIS_POINTS_DIVISOR);
@@ -268,7 +268,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
               totalCreatorsFee.mul(creator3Share),
             ]
               .reduce((partialSum, a) => partialSum.add(a), new BN(0))
-              .div(new BN(100)),
+              .div(new BN(100))
           )
           .toNumber()
       : 0;
@@ -279,10 +279,10 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator1Funds);
     const creator1Info = await provider.connection.getAccountInfo(
-      creator1.publicKey,
+      creator1.publicKey
     );
     expect(Number(creator1Info?.lamports)).toEqual(
-      beforeCreator1Amount + creator1Funds.toNumber(),
+      beforeCreator1Amount + creator1Funds.toNumber()
     );
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
@@ -292,10 +292,10 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator2Funds);
     const creator2Info = await provider.connection.getAccountInfo(
-      creator2.publicKey,
+      creator2.publicKey
     );
     expect(Number(creator2Info?.lamports)).toEqual(
-      beforeCreator2Amount + creator2Funds.toNumber(),
+      beforeCreator2Amount + creator2Funds.toNumber()
     );
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
@@ -305,10 +305,10 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .add(new BN(cretorsFeeRemainder > 0 ? 1 : 0));
     feesPaidOut = feesPaidOut.add(creator3Funds);
     const creator3Info = await provider.connection.getAccountInfo(
-      creator3.publicKey,
+      creator3.publicKey
     );
     expect(Number(creator3Info?.lamports)).toEqual(
-      beforeCreator3Amount + creator3Funds.toNumber(),
+      beforeCreator3Amount + creator3Funds.toNumber()
     );
     cretorsFeeRemainder = cretorsFeeRemainder > 0 ? cretorsFeeRemainder - 1 : 0;
 
@@ -316,24 +316,24 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
       .mul(new BN(DEFAULT_BUY_SIDE_FEE_SHARE))
       .div(BASIS_POINTS_DIVISOR);
     const buySideReceiverInfo = await provider.connection.getAccountInfo(
-      buySideReceiver.publicKey,
+      buySideReceiver.publicKey
     );
     expect(Number(buySideReceiverInfo?.lamports)).toEqual(
-      beforeBuysideAmount + buySideFee.toNumber(),
+      beforeBuysideAmount + buySideFee.toNumber()
     );
     const feeCollectorInfo = await provider.connection.getAccountInfo(
-      feeCollector.publicKey,
+      feeCollector.publicKey
     );
     expect(Number(feeCollectorInfo?.lamports)).toEqual(
-      beforeFeeCollectorAmount + totalFees.sub(feesPaidOut).toNumber(),
+      beforeFeeCollectorAmount + totalFees.sub(feesPaidOut).toNumber()
     );
 
     const paymentReceiverInfo = await provider.connection.getAccountInfo(
-      paymentReceiver.publicKey,
+      paymentReceiver.publicKey
     );
     expect(Number(paymentReceiverInfo?.lamports)).toEqual(
       beforePaymentAmount +
-        paymentAmount.add(takerFee).sub(totalFees).sub(buySideFee).toNumber(),
+        paymentAmount.add(takerFee).sub(totalFees).sub(buySideFee).toNumber()
     );
 
     const afterPayerAmount =
@@ -344,7 +344,7 @@ describe("Handle payment with royalties with buy side receiver and seller fee", 
     expect(
       beforePayerAmount -
         afterPayerAmount -
-        paymentAmount.add(takerFee).toNumber(),
+        paymentAmount.add(takerFee).toNumber()
     ).toBeLessThanOrEqual(5000);
   });
 });

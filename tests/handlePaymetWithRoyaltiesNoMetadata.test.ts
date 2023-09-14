@@ -37,7 +37,7 @@ describe("Handle payment with royalties with no metadata", () => {
     provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(airdropCreator);
 
@@ -47,7 +47,7 @@ describe("Handle payment with royalties with no metadata", () => {
       {
         target: provider.wallet.publicKey,
         amount: RECIPIENT_START_PAYMENT_AMOUNT.toNumber(),
-      },
+      }
     );
 
     [, mintId] = await createMint(
@@ -55,7 +55,7 @@ describe("Handle payment with royalties with no metadata", () => {
       new Wallet(tokenCreator),
       {
         target: provider.wallet.publicKey,
-      },
+      }
     );
   });
 
@@ -76,14 +76,14 @@ describe("Handle payment with royalties with no metadata", () => {
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
-      checkPaymentManagerId,
+      checkPaymentManagerId
     );
     expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
     expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(
-      MAKER_FEE.toNumber(),
+      MAKER_FEE.toNumber()
     );
     expect(paymentManagerData.parsed.takerFeeBasisPoints).toEqual(
-      TAKER_FEE.toNumber(),
+      TAKER_FEE.toNumber()
     );
   });
 
@@ -99,7 +99,7 @@ describe("Handle payment with royalties with no metadata", () => {
         mintId,
         paymentMintId,
         paymentReceiver.publicKey,
-        paymentManagerId,
+        paymentManagerId
       );
 
     const payerTokenAccountId = await withFindOrInitAssociatedTokenAccount(
@@ -108,13 +108,13 @@ describe("Handle payment with royalties with no metadata", () => {
       paymentMintId,
       provider.wallet.publicKey,
       provider.wallet.publicKey,
-      true,
+      true
     );
 
     let beforePayerTokenAccountAmount = 0;
     try {
       beforePayerTokenAccountAmount = Number(
-        (await getAccount(provider.connection, payerTokenAccountId)).amount,
+        (await getAccount(provider.connection, payerTokenAccountId)).amount
       );
     } catch (e) {
       // pass
@@ -133,7 +133,7 @@ describe("Handle payment with royalties with no metadata", () => {
         feeCollectorTokenAccountId: feeCollectorTokenAccountId,
         paymentTokenAccountId: paymentTokenAccountId,
         excludeCretors: [],
-      },
+      }
     );
 
     await executeTransaction(provider.connection, transaction, provider.wallet);
@@ -151,17 +151,17 @@ describe("Handle payment with royalties with no metadata", () => {
       .div(BASIS_POINTS_DIVISOR);
     const feeCollectorAtaInfo = await getAccount(
       provider.connection,
-      feeCollectorTokenAccountId,
+      feeCollectorTokenAccountId
     );
     expect(Number(feeCollectorAtaInfo.amount)).toEqual(
-      totalFees.add(buySideFee).sub(feesPaidOut).toNumber(),
+      totalFees.add(buySideFee).sub(feesPaidOut).toNumber()
     );
 
     const afterPayerTokenAccountAmount = (
       await getAccount(provider.connection, payerTokenAccountId)
     ).amount;
     expect(
-      beforePayerTokenAccountAmount - Number(afterPayerTokenAccountAmount),
+      beforePayerTokenAccountAmount - Number(afterPayerTokenAccountAmount)
     ).toEqual(paymentAmount.add(takerFee).toNumber());
   });
 });

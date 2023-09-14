@@ -1748,7 +1748,7 @@ dependencies = [
 
 [[package]]
 name = "solana-nft-programs-payment-manager"
-version = "4.0.0"
+version = "1.0.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

@@ -38,7 +38,7 @@ const commandBuilder = <T>(command: {
       const a = command.getArgs(c, w);
       console.log(command.description);
       console.log(
-        `[cluster=${clusterString}] [wallet=${w.publicKey.toString()}]`,
+        `[cluster=${clusterString}] [wallet=${w.publicKey.toString()}]`
       );
       console.log(`\n(modify args in ${command.commandName}.ts)`);
       console.log(JSON.stringify(a, null, 2));
@@ -57,7 +57,7 @@ export const question = async (query: string) => {
     rl.question(query, (ans) => {
       rl.close();
       resolve(ans);
-    }),
+    })
   );
 };
 

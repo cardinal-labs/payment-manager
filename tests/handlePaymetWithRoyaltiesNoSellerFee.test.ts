@@ -51,7 +51,7 @@ describe("Handle payment with royalties", () => {
     provider = await getProvider();
     const airdropCreator = await provider.connection.requestAirdrop(
       tokenCreator.publicKey,
-      LAMPORTS_PER_SOL,
+      LAMPORTS_PER_SOL
     );
     await provider.connection.confirmTransaction(airdropCreator);
 
@@ -61,7 +61,7 @@ describe("Handle payment with royalties", () => {
       {
         target: provider.wallet.publicKey,
         amount: RECIPIENT_START_PAYMENT_AMOUNT.toNumber(),
-      },
+      }
     );
 
     [, mintId] = await createMint(
@@ -69,7 +69,7 @@ describe("Handle payment with royalties", () => {
       new Wallet(tokenCreator),
       {
         target: provider.wallet.publicKey,
-      },
+      }
     );
 
     const metadataId = findMintMetadataId(mintId);
@@ -117,7 +117,7 @@ describe("Handle payment with royalties", () => {
               uses: null,
             },
           },
-        },
+        }
       ),
       createCreateMasterEditionV3Instruction(
         {
@@ -132,13 +132,13 @@ describe("Handle payment with royalties", () => {
           createMasterEditionArgs: {
             maxSupply: new BN(0),
           },
-        },
-      ),
+        }
+      )
     );
     await executeTransaction(
       provider.connection,
       transaction,
-      new Wallet(tokenCreator),
+      new Wallet(tokenCreator)
     );
   });
 
@@ -159,17 +159,17 @@ describe("Handle payment with royalties", () => {
     const checkPaymentManagerId = findPaymentManagerAddress(paymentManagerName);
     const paymentManagerData = await getPaymentManager(
       provider.connection,
-      checkPaymentManagerId,
+      checkPaymentManagerId
     );
     expect(paymentManagerData.parsed.name).toEqual(paymentManagerName);
     expect(paymentManagerData.parsed.makerFeeBasisPoints).toEqual(
-      MAKER_FEE.toNumber(),
+      MAKER_FEE.toNumber()
     );
     expect(paymentManagerData.parsed.takerFeeBasisPoints).toEqual(
-      TAKER_FEE.toNumber(),
+      TAKER_FEE.toNumber()
     );
     expect(paymentManagerData.parsed.royaltyFeeShare?.toNumber()).toEqual(
-      ROYALTEE_FEE_SHARE.toNumber(),
+      ROYALTEE_FEE_SHARE.toNumber()
     );
   });
 
@@ -184,7 +184,7 @@ describe("Handle payment with royalties", () => {
         mintId,
         paymentMintId,
         paymentReceiver.publicKey,
-        paymentManagerId,
+        paymentManagerId
       );
     const royaltiesRemainingAccounts: AccountMeta[] = [];
 
@@ -195,7 +195,7 @@ describe("Handle payment with royalties", () => {
       paymentMintId,
       creator1.publicKey,
       provider.wallet.publicKey,
-      true,
+      true
     );
     royaltiesRemainingAccounts.push({
       pubkey: creator1MintTokenAccount,
@@ -209,7 +209,7 @@ describe("Handle payment with royalties", () => {
       paymentMintId,
       creator2.publicKey,
       provider.wallet.publicKey,
-      true,
+      true
     );
     royaltiesRemainingAccounts.push({
       pubkey: creator2MintTokenAccount,
@@ -223,7 +223,7 @@ describe("Handle payment with royalties", () => {
       paymentMintId,
       creator3.publicKey,
       provider.wallet.publicKey,
-      true,
+      true
     );
     royaltiesRemainingAccounts.push({
       pubkey: creator3MintTokenAccount,
@@ -238,7 +238,7 @@ describe("Handle payment with royalties", () => {
       paymentMintId,
       provider.wallet.publicKey,
       provider.wallet.publicKey,
-      true,
+      true
     );
 
     const creator1Ata = await findAta(paymentMintId, creator1.publicKey, true);
@@ -246,19 +246,19 @@ describe("Handle payment with royalties", () => {
     const creator3Ata = await findAta(paymentMintId, creator3.publicKey, true);
 
     await expect(
-      getAccount(provider.connection, creator1Ata),
+      getAccount(provider.connection, creator1Ata)
     ).rejects.toThrow();
     await expect(
-      getAccount(provider.connection, creator2Ata),
+      getAccount(provider.connection, creator2Ata)
     ).rejects.toThrow();
     await expect(
-      getAccount(provider.connection, creator3Ata),
+      getAccount(provider.connection, creator3Ata)
     ).rejects.toThrow();
 
     let beforePayerTokenAccountAmount = 0;
     try {
       beforePayerTokenAccountAmount = Number(
-        (await getAccount(provider.connection, payerTokenAccountId)).amount,
+        (await getAccount(provider.connection, payerTokenAccountId)).amount
       );
     } catch (e) {
       // pass
@@ -277,7 +277,7 @@ describe("Handle payment with royalties", () => {
         feeCollectorTokenAccountId: feeCollectorTokenAccount,
         paymentTokenAccountId: paymentTokenAccountId,
         excludeCretors: [],
-      },
+      }
     );
 
     await executeTransaction(provider.connection, transaction, provider.wallet);
@@ -306,7 +306,7 @@ describe("Handle payment with royalties", () => {
               totalCreatorsFee.mul(creator3Share),
             ]
               .reduce((partialSum, a) => partialSum.add(a), new BN(0))
-              .div(new BN(100)),
+              .div(new BN(100))
           )
           .toNumber()
       : 0;
@@ -343,17 +343,17 @@ describe("Handle payment with royalties", () => {
       .div(BASIS_POINTS_DIVISOR);
     const feeCollectorAtaInfo = await getAccount(
       provider.connection,
-      feeCollectorTokenAccount,
+      feeCollectorTokenAccount
     );
     expect(Number(feeCollectorAtaInfo.amount)).toEqual(
-      totalFees.add(buySideFee).sub(feesPaidOut).toNumber(),
+      totalFees.add(buySideFee).sub(feesPaidOut).toNumber()
     );
 
     const afterPayerTokenAccountAmount = (
       await getAccount(provider.connection, payerTokenAccountId)
     ).amount;
     expect(
-      beforePayerTokenAccountAmount - Number(afterPayerTokenAccountAmount),
+      beforePayerTokenAccountAmount - Number(afterPayerTokenAccountAmount)
     ).toEqual(paymentAmount.add(takerFee).toNumber());
   });
 });
