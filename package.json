@@ -1,6 +1,6 @@
 {
   "name": "@solana-nft-programs/payment-manager",
-  "version": "4.0.1",
+  "version": "1.0.0",
   "description": "Payment manager SDK",
   "keywords": [
     "solana",
