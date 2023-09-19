@@ -1,10 +1,10 @@
-use mpl_token_metadata::utils::assert_derivation;
+use mpl_token_metadata::accounts::Metadata;
+use mpl_utils::assert_derivation;
 
 use {
     crate::{errors::ErrorCode, state::*},
     anchor_lang::prelude::*,
     anchor_spl::token::Mint,
-    mpl_token_metadata::state::Metadata,
     solana_program::{program::invoke, system_instruction::transfer},
 };
 
@@ -49,16 +49,17 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, HandleNativePaymentWithRoy
 
     // assert metadata account derivation
     assert_derivation(
-        &mpl_token_metadata::id(),
+        &mpl_token_metadata::ID,
         &ctx.accounts.mint_metadata.to_account_info(),
-        &[mpl_token_metadata::state::PREFIX.as_bytes(), mpl_token_metadata::id().as_ref(), ctx.accounts.mint.key().as_ref()],
+        &["metadata".to_string().as_bytes(), mpl_token_metadata::ID.as_ref(), ctx.accounts.mint.key().as_ref()],
+        error!(ErrorCode::InvalidMintMetadataOwner),
     )?;
 
     // royalties
     let mut fees_paid_out: u64 = 0;
     let remaining_accs = &mut ctx.remaining_accounts.iter();
     if !ctx.accounts.mint_metadata.data_is_empty() {
-        if ctx.accounts.mint_metadata.to_account_info().owner.key() != mpl_token_metadata::id() {
+        if ctx.accounts.mint_metadata.to_account_info().owner.key() != mpl_token_metadata::ID {
             return Err(error!(ErrorCode::InvalidMintMetadataOwner));
         }
         let mint_metadata_data = ctx.accounts.mint_metadata.try_borrow_mut_data().expect("Failed to borrow data");
@@ -68,7 +69,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, HandleNativePaymentWithRoy
         }
         let seller_fee = if payment_manager.include_seller_fee_basis_points {
             payment_amount
-                .checked_mul(mint_metadata.data.seller_fee_basis_points.into())
+                .checked_mul(mint_metadata.seller_fee_basis_points.into())
                 .expect("Multiplication error")
                 .checked_div(BASIS_POINTS_DIVISOR.into())
                 .expect("Division error")
@@ -84,7 +85,7 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, HandleNativePaymentWithRoy
             .expect("Add error");
         total_fees = total_fees.checked_add(seller_fee).expect("Add error");
 
-        if let Some(creators) = mint_metadata.data.creators {
+        if let Some(creators) = mint_metadata.creators {
             let creator_amounts: Vec<u64> = creators
                 .clone()
                 .into_iter()
